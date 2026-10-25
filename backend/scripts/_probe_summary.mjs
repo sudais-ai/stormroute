@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const s = fs.readFileSync(process.argv[2], 'utf8');
+const lines = s.split('\n');
+console.log(lines.slice(0, 8).join('\n'));
+const m = s.match(/"routeCount":\s*(\d+)/); console.log('routeCount:', m && m[1]);
+const m2 = s.match(/"threeRoutesReturned":\s*(true|false)/); console.log('threeRoutes:', m2 && m2[1]);
+const m3 = s.match(/"duplicatesDropped":\s*(\d+)/); console.log('duplicatesDropped:', m3 && m3[1]);
+const warn = s.match(/"warning":\s*(?:"[^"]*"|null)/); console.log('warning:', warn && warn[0]);
+const labels = s.match(/"label":"[^"]+"/g); console.log('labels:', labels);
+const pts = s.match(/"coordinates":\[\[/g); console.log('coordinate-arrays:', pts);
+const pk = s.toLowerCase().includes('mapbox') && /pk\.[a-z]/i.test(s); console.log('token-leak-suspect:', pk);

@@ -1,0 +1,394 @@
+/* ==========================================================================
+   StormRoute design system — SINGLE SOURCE OF TRUTH for the UI round.
+
+   Cool-steel ops console: no emoji, no teal, no glass, no shadows.
+   1px borders everywhere; radius 6px controls / 10px cards.
+   Fonts: @fontsource first (CSS requires @imports at the top), then Tailwind.
+   ========================================================================== */
+
+@import "@fontsource/barlow/400.css";
+@import "@fontsource/barlow/500.css";
+@import "@fontsource/barlow/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "tailwindcss";
+
+@theme {
+  /* Surfaces + text — the single dark look, defined correct in :root. */
+  --color-bg: #0B0E14;
+  --color-panel: #141922;
+  --color-raised: #1B212B;
+  --color-border: #262D38;
+  --color-border-strong: #3D4654;
+  --color-text: #E7ECF3;
+  --color-text-2: #9AA6B5;
+  --color-text-3: #5A6472;
+  --color-accent: #5C9DFF;
+  --color-amber-signal: #FFB224;
+
+  /* Ergonomic aliases from plan section 3.3 — component agents code against
+     text-ink / text-ink-2 / text-ink-3 / bg-signal / ring-accent.
+     Values are pinned equal to the tokens above. */
+  --color-ink: #E7ECF3;
+  --color-ink-2: #9AA6B5;
+  --color-ink-3: #5A6472;
+  --color-signal: #FFB224;
+
+  /* Risk levels — UI semantic names mapped 1:1 to the TEST-PINNED hexes in
+     src/lib/heatmap.ts (CORRIDOR_RISK_COLORS). CSS and heatmap must agree;
+     heatmap.ts itself is frozen and never edited. */
+  --color-risk-low: #22c55e;
+  --color-risk-moderate: #f59e0b;
+  --color-risk-high: #f97316;
+  --color-risk-severe: #ef4444;
+  --color-risk-no-travel: #dc2626;
+  --color-risk-unknown: #64748b;
+
+  /* Typography — Barlow for UI text, JetBrains Mono for input echo,
+     coordinates, weights, via-roads, timestamps, slider label + ticks. */
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Radii; full pill shape remains reserved for the map-layers pills row. */
+  --radius-control: 6px;
+  --radius-card: 10px;
+}
+
+/* harmless alias: main.tsx adds .dark via documentElement classList; every
+   token above is already the one dark look, so nothing needs re-declaring. */
+.dark { }
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+html {
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans); /* Barlow */
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* One focus style for the whole app. No shadow rings. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 32%, transparent);
+  color: var(--color-text);
+}
+
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-strong);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Component classes. Defined in @layer components so plain Tailwind
+   utilities (p-2, rounded-*, border-*) can still refine on the same element.
+   ========================================================================== */
+
+@layer components {
+  /* Card surface: panel fill, 1px border, 10px radius, NO shadow. */
+  .card-raised {
+    background: var(--color-panel);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+
+  /* Solid accent action. */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: var(--color-accent);
+    color: #0B0E14;
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    cursor: pointer;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 86%, #ffffff);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Quiet, bordered secondary action. */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: transparent;
+    color: var(--color-text-2);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    cursor: pointer;
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--color-accent);
+  }
+
+  /* Risk badges: full-hue text + border over a 13% same-hue fill.
+     Full-hue (not mixed into a fore/background pair) so dots, badges and the
+     map legend all speak the same six pinned hues.
+     `.risk-no_travel` (underscore, the raw API level key riskColors.ts emits)
+     is aliased onto the hyphen spelling in every block — either spelling hits. */
+  .risk-low,
+  .risk-moderate,
+  .risk-high,
+  .risk-severe,
+  .risk-no-travel,
+  .risk-no_travel,
+  .risk-unknown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-control);
+    border: 1px solid currentColor;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .risk-low {
+    color: var(--color-risk-low);
+    background: color-mix(in srgb, var(--color-risk-low) 13%, transparent);
+  }
+
+  .risk-moderate {
+    color: var(--color-risk-moderate);
+    background: color-mix(in srgb, var(--color-risk-moderate) 13%, transparent);
+  }
+
+  .risk-high {
+    color: var(--color-risk-high);
+    background: color-mix(in srgb, var(--color-risk-high) 13%, transparent);
+  }
+
+  .risk-severe {
+    color: var(--color-risk-severe);
+    background: color-mix(in srgb, var(--color-risk-severe) 13%, transparent);
+  }
+
+  .risk-no-travel,
+  .risk-no_travel {
+    color: var(--color-risk-no-travel);
+    background: color-mix(in srgb, var(--color-risk-no-travel) 13%, transparent);
+  }
+
+  .risk-unknown {
+    color: var(--color-risk-unknown);
+    background: color-mix(in srgb, var(--color-risk-unknown) 13%, transparent);
+  }
+
+  /* Small bordered badge chrome. `.risk-badge` is the identical twin of
+     `.badge` in the same rule block because riskColors.riskBadgeClass() emits
+     that name, while components emit `.badge` — one shape, two names, single
+     rule so they can never drift. Hue comes from the `.risk-*` color rules
+     above (border: currentColor picks it up). */
+  .badge,
+  .risk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-control);
+    padding: 0.125rem 0.5rem;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* The ONLY full-pill shape on the page: the merged map-layers pills row. */
+  .chip-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 9999px;
+    background: var(--color-panel);
+    color: var(--color-text-2);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  /* TripForm results breakout: spans the full page grid below form + map. */
+  .results-band {
+    grid-column: 1 / -1;
+  }
+
+  /* Lets wrappers hand layout control to the grid without extra DOM math. */
+  .display-contents {
+    display: contents;
+  }
+
+  /* Small status dot (header service status, legend dots). */
+  .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    flex: none;
+  }
+
+  /* Risk legend-dot fills, pinned to the same six hexes as RISK_HEX in
+     riskColors.ts (mirror of the test-pinned CORRIDOR_RISK_COLORS in
+     heatmap.ts). Real classes, so markup never needs inline fill styles.
+     `.risk-dot-no_travel` aliases the raw API level key, like `.risk-no_*`. */
+  .risk-dot-low {
+    background-color: #22c55e;
+  }
+
+  .risk-dot-moderate {
+    background-color: #f59e0b;
+  }
+
+  .risk-dot-high {
+    background-color: #f97316;
+  }
+
+  .risk-dot-severe {
+    background-color: #ef4444;
+  }
+
+  .risk-dot-no-travel,
+  .risk-dot-no_travel {
+    background-color: #dc2626;
+  }
+
+  .risk-dot-unknown {
+    background-color: #64748b;
+  }
+
+  /* Range input: 4px steel track, 16px accent thumb. No teal anywhere. */
+  .slider {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 16px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .slider:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .slider::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--color-border-strong);
+  }
+
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -6px; /* centers the 16px thumb on the 4px webkit track */
+    border-radius: 9999px;
+    background: var(--color-accent);
+    border: 2px solid var(--color-panel);
+  }
+
+  .slider::-moz-range-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--color-border-strong);
+  }
+
+  .slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--color-panel);
+    border-radius: 9999px;
+    background: var(--color-accent);
+  }
+
+  /* Keyboard users only; hidden until focused. */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.75rem 1rem;
+    background: var(--color-accent);
+    color: #0B0E14;
+    font-weight: 600;
+    border-radius: var(--radius-control);
+    z-index: 9999;
+  }
+
+  .skip-link:focus-visible {
+    top: 1rem;
+  }
+}

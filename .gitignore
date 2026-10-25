@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node / Vite
+node_modules/
+frontend/dist/
+*.local
+
+# Environment & secrets — never commit real values
+.env
+.env.*
+!.env.example
+
+# Django
+db.sqlite3
+backend/staticfiles/
+
+# Playwright MCP scratch artifacts (screenshots for verification live in docs/verification/)
+.playwright-mcp/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

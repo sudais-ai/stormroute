@@ -1,0 +1,10 @@
+# StormRoute backend dependencies (server-side only for repo hygiene).
+# Runtime targets: Python 3.12, Windows dev machine. Pinned to versions proven
+# in this repo's verification runs (run `pip freeze` again to re-derive).
+Django==6.1.2
+djangorestframework==3.18.3
+django-cors-headers==4.9.0
+# Loads gitignored backend/.env into os.environ (stormroute/__init__.py).
+python-dotenv==1.2.4
+# Outbound provider calls: Mapbox geocode/directions, Open-Meteo weather (Phase 5).
+requests==2.34.2
