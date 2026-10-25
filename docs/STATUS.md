@@ -130,7 +130,7 @@
 ### End state
 - Backend 200/200, frontend 80/80, tsc 0, build PASS (worker asset emitted), preview 4175 verified then closed; dev servers left running: backend 8001, frontend 5174.
 - All Phase 9 acceptance criteria executed and passing; Phase 8 re-verification gate completed.
-- Next: Phase 10 only on explicit instruction. Nothing committed or pushed.
+- Next: Phase 10 only on explicit instruction. (Updated 2026-10-25 later: local history now exists on master — commits `7e914ea` code + `ae00ac8` docs/evidence; still not pushed, awaiting explicit instruction.)
 
 ### Phase 10 additions (implemented + verified — 2026-10-25 session; real)
 
@@ -188,4 +188,4 @@
 
 ## Next authorized step
 
-Deployment & submission work (GitHub remote/push, hosted URL, Loom) — only on explicit user instruction. UI product-quality items verified 2026-10-25; nothing committed or pushed as of this update.
+Deployment & submission work (GitHub remote/push, hosted URL, Loom) — only on explicit user instruction. UI product-quality items verified 2026-10-25; as of this update the repo has two local commits on master (`7e914ea` code, `ae00ac8` docs/evidence) and has not been pushed.
