@@ -32,8 +32,8 @@ const LEGEND: Array<{ level: RiskLevel; label: string }> = [
   { level: "unknown", label: "Unknown" },
 ]
 
-const ROUTE_LINE_SELECTED = "#5C9DFF" // CSS accent token
-const ROUTE_LINE_UNSELECTED = "#3D4654" // muted steel (border-strong token)
+const ROUTE_LINE_SELECTED = "#2563EB" // CSS accent token (light theme)
+const ROUTE_LINE_UNSELECTED = "#D1D5DB" // muted steel (border-strong token, light theme)
 
 /**
  * Style mutations (addSource/addLayer/removeLayer) are unsafe while a fallback
@@ -138,9 +138,9 @@ export function MapViewport({
     if (!containerRef.current || mapRef.current) return
     const map = new maplibregl.Map({
       container: containerRef.current,
-      // Carto dark-matter basemap (Basemap: Carto dark-matter attribution in the page footer).
+      // Carto Positron light basemap (light theme).
       // fallback if blocked: https://demotiles.maplibre.org/style.json
-      style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+      style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
       center: [-98.5795, 39.8283],
       zoom: 4,
       attributionControl: false,
@@ -198,7 +198,7 @@ export function MapViewport({
             "circle-radius": ["match", ["get", "riskLevel"], "no_travel", 9, "severe", 8, "high", 7, "moderate", 6.5, "low", 6, 5.5],
             "circle-opacity": 0.3,
             "circle-stroke-width": 1,
-            "circle-stroke-color": "#0B0E14",
+            "circle-stroke-color": "#FAFAF9",
             "circle-stroke-opacity": 0.4,
           },
         })
@@ -239,7 +239,7 @@ export function MapViewport({
           el.style.borderRadius = "50%"
           el.style.backgroundColor = RISK_HEX[level]
           // border-strong token (#3D4654): matches the border system, no shadow on dark.
-          el.style.border = "2px solid #3D4654"
+          el.style.border = "2px solid #D1D5DB"
           el.style.cursor = "pointer"
           el.style.transition = "transform 120ms ease"
           el.addEventListener("mouseenter", () => {
@@ -293,17 +293,25 @@ export function MapViewport({
         </div>
       ) : null}
 
-      <div className="card-raised pointer-events-none absolute right-3 top-3 p-3">
-        <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-ink-2">Risk at selected hour</p>
-        <ul className="space-y-1">
-          {LEGEND.map((entry) => (
-            <li key={entry.level} className="flex items-center gap-2 text-[12px] text-ink-2">
-              <span aria-hidden="true" className={riskDotClass(entry.level)} />
-              {entry.label}
-            </li>
-          ))}
-        </ul>
-        <p className="mt-2 font-mono text-[10px] text-ink-3">Corridor samples ≈ 11 km</p>
+      <div className="pointer-events-none absolute right-3 top-3 flex max-w-[13rem] flex-col items-start">
+        <div className="card-raised p-3">
+          <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-ink-2">Risk at selected hour</p>
+          <ul className="space-y-1">
+            {LEGEND.map((entry) => (
+              <li key={entry.level} className="flex items-center gap-2 text-[12px] text-ink-2">
+                <span aria-hidden="true" className={riskDotClass(entry.level)} />
+                {entry.label}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 font-mono text-[10px] text-ink-3">One reading every 11 km.</p>
+          <p className="mt-1.5 text-[11px] text-ink-3">Colors follow the hour you choose on the slider.</p>
+        </div>
+        {/* Sits below the legend card, outside it: the card is display-only, the
+            hint is plain explanation copy for a first-time user. */}
+        <p className="mt-2 text-[11px] leading-snug text-ink-3">
+          Every dot is one stop on your route. Its color is the weather risk when your truck gets there.
+        </p>
       </div>
 
       {hovered ? (

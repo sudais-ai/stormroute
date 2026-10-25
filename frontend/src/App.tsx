@@ -52,7 +52,7 @@ export default function App() {
               aria-hidden="true"
               className="h-7 w-7 rounded-control border-4 border-accent"
               style={{
-                backgroundImage: "repeating-linear-gradient(45deg, var(--color-accent) 0 4px, #0B0E14 4px 6px)",
+                backgroundImage: "repeating-linear-gradient(45deg, var(--color-accent) 0 4px, var(--color-bg) 4px 6px)",
                 backgroundClip: "content-box",
               }}
             />
@@ -131,7 +131,8 @@ export default function App() {
                 <p className="mt-2 text-sm text-ink-2">Run a trip to see routes, checkpoints, and the sliding corridor forecast.</p>
                 <ul className="mx-auto mt-5 max-w-sm space-y-2 text-left text-sm text-ink-2">
                   <li>Confirm origin and destination are real city names.</li>
-                  <li>Widen the checkpoint radius to 50 miles to find more options.</li>
+                  <li>Try 50 miles between weather stops to find more options.</li>
+                  <li>Tap any dot on the map for details.</li>
                 </ul>
               </div>
             )}
@@ -142,7 +143,7 @@ export default function App() {
       <footer className="mt-10 border-t border-border bg-panel px-6 py-5 text-center">
         <p className="text-[13px] text-ink-3">
           Risk route-mile values are model estimates for planning, not real-time road conditions. Weather: Open-Meteo ·
-          Basemap: Carto dark-matter · Routing: Mapbox.
+          Basemap: Carto Positron · Routing: Mapbox.
         </p>
       </footer>
     </div>

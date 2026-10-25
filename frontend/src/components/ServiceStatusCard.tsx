@@ -9,10 +9,10 @@ const STATUS_LABELS: Record<HealthStatus, string> = {
 }
 
 const STATUS_DOT_COLORS: Record<HealthStatus, string> = {
-  checking: "#FFB224",
-  healthy: "#22c55e",
-  unhealthy: "#ef4444",
-  unreachable: "#ef4444",
+  checking: "var(--color-signal)",
+  healthy: "var(--color-risk-low)",
+  unhealthy: "var(--color-risk-severe)",
+  unreachable: "var(--color-risk-severe)",
 }
 
 interface ServiceCardProps {
