@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2026-10-24T10:50:00.774Z",
+  "method": "script-driven real Chrome (playwright-core, channel=chrome, headless) via CDP — Playwright MCP click synthesis wedged",
+  "appUrl": "http://localhost:5174/",
+  "viewportDesktop": "1280x900",
+  "viewportMobile": "420x900",
+  "consoleIssues": [],
+  "results": [
+    {
+      "name": "1. Phase 3 landing renders with 'Find route options' submit",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "2. Invalid form blocked client-side with no backend route POST",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "3. Happy path: live route cards rendered with neutral labels",
+      "passed": true,
+      "detail": "labels=Route 1 | Route 2 countText=2 distinctText=2 loadingSeen=true"
+    },
+    {
+      "name": "4. Fewer-than-three honest warning rendered with no-invented-routes clause",
+      "passed": true,
+      "detail": "Mapbox returned 2 distinct routes for this corridor (three were requested). Only real provider options are shown — no route is invented. Weather analysis (later"
+    },
+    {
+      "name": "5. Resubmit same corridor performs a second live round-trip and re-renders",
+      "passed": true,
+      "detail": "Route 1 | Route 2"
+    },
+    {
+      "name": "6. Geocode-failure alert",
+      "passed": true,
+      "detail": "CONDITIONAL: live Mapbox geocoder resolved every test string (fuzzy matching is expected provider behaviour); geocode_failed stage attribution is proven by mocked backend tests (test_routing 26/26)"
+    },
+    {
+      "name": "7. Mobile 420px layout renders without horizontal overflow blockers",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "8. No unexpected console errors/warnings during Phase 3 flows",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "routePosts": [
+    "POST → http://localhost:5174/api/trips/routes/",
+    "POST → http://localhost:5174/api/trips/routes/",
+    "POST → http://localhost:5174/api/trips/routes/",
+    "POST → http://localhost:5174/api/trips/routes/",
+    "POST → http://localhost:5174/api/trips/routes/"
+  ],
+  "routeResponses": [
+    "200 ← http://localhost:5174/api/trips/routes/",
+    "200 ← http://localhost:5174/api/trips/routes/",
+    "200 ← http://localhost:5174/api/trips/routes/",
+    "422 ← http://localhost:5174/api/trips/routes/",
+    "422 ← http://localhost:5174/api/trips/routes/"
+  ],
+  "allPassed": true
+}

@@ -1,0 +1,378 @@
+{
+  "generatedAt": "2026-10-24T12:19:48.063Z",
+  "method": "script-driven real Chrome (playwright-core, channel=chrome, headless) via CDP — Playwright MCP clicks wedge (extension executor M_ID crash); navigation/snapshot/fill worked",
+  "appUrl": "http://localhost:5174/",
+  "viewports": {
+    "desktop": "1280x900",
+    "mobile": "420x900"
+  },
+  "apiCallsObserved": 3,
+  "apiSummaries": [
+    {
+      "status": 200,
+      "routeCount": 2,
+      "threeRoutesReturned": false,
+      "routes": [
+        {
+          "routeId": "rt_7ca3c4a1894d",
+          "label": "Route 1",
+          "distanceMiles": 1003.1,
+          "durationReadable": "14 h 52 min",
+          "arrivalISO": "2026-10-25T15:11:46.902000+00:00",
+          "checkpointSummary": {
+            "count": 42,
+            "requestedIntervalMiles": 25,
+            "effectiveIntervalMiles": 25,
+            "capped": false,
+            "maxPerRoute": 500,
+            "geometryDistanceMeters": 1612473.5,
+            "geometryDistanceMiles": 1001.9,
+            "providerDistanceMeters": 1614283.6,
+            "durationSeconds": 53566.9,
+            "samplingMethod": "haversine-distance-along-linestring",
+            "etaMethod": "distance-weighted-provider-duration"
+          },
+          "checkpointFirst": {
+            "checkpointId": "cp_2dfccc708663",
+            "routeId": "rt_7ca3c4a1894d",
+            "sequence": 1,
+            "coordinates": [
+              -87.632362,
+              41.881953
+            ],
+            "distanceFromStartMeters": 0,
+            "distanceFromStartMiles": 0,
+            "elapsedSeconds": 0,
+            "arrivalISO": "2026-10-25T00:19:00+00:00",
+            "interpolated": false
+          },
+          "checkpointLast": {
+            "checkpointId": "cp_37287381a0e8",
+            "routeId": "rt_7ca3c4a1894d",
+            "sequence": 42,
+            "coordinates": [
+              -104.986109,
+              39.741681
+            ],
+            "distanceFromStartMeters": 1612473.5,
+            "distanceFromStartMiles": 1001.9,
+            "elapsedSeconds": 53566.9,
+            "arrivalISO": "2026-10-25T15:11:46.902000+00:00",
+            "interpolated": false
+          },
+          "geometryPointCount": 10375
+        },
+        {
+          "routeId": "rt_ace16afeb065",
+          "label": "Route 2",
+          "distanceMiles": 1129.3,
+          "durationReadable": "16 h 47 min",
+          "arrivalISO": "2026-10-25T17:06:46.145000+00:00",
+          "checkpointSummary": {
+            "count": 47,
+            "requestedIntervalMiles": 25,
+            "effectiveIntervalMiles": 25,
+            "capped": false,
+            "maxPerRoute": 500,
+            "geometryDistanceMeters": 1815370,
+            "geometryDistanceMiles": 1128,
+            "providerDistanceMeters": 1817408,
+            "durationSeconds": 60466.1,
+            "samplingMethod": "haversine-distance-along-linestring",
+            "etaMethod": "distance-weighted-provider-duration"
+          },
+          "checkpointFirst": {
+            "checkpointId": "cp_9e7056d8b5b9",
+            "routeId": "rt_ace16afeb065",
+            "sequence": 1,
+            "coordinates": [
+              -87.632362,
+              41.881953
+            ],
+            "distanceFromStartMeters": 0,
+            "distanceFromStartMiles": 0,
+            "elapsedSeconds": 0,
+            "arrivalISO": "2026-10-25T00:19:00+00:00",
+            "interpolated": false
+          },
+          "checkpointLast": {
+            "checkpointId": "cp_bce61e8e4407",
+            "routeId": "rt_ace16afeb065",
+            "sequence": 47,
+            "coordinates": [
+              -104.986109,
+              39.741681
+            ],
+            "distanceFromStartMeters": 1815370,
+            "distanceFromStartMiles": 1128,
+            "elapsedSeconds": 60466.1,
+            "arrivalISO": "2026-10-25T17:06:46.145000+00:00",
+            "interpolated": false
+          },
+          "geometryPointCount": 11986
+        }
+      ]
+    },
+    {
+      "status": 200,
+      "routeCount": 2,
+      "threeRoutesReturned": false,
+      "routes": [
+        {
+          "routeId": "rt_7ca3c4a1894d",
+          "label": "Route 1",
+          "distanceMiles": 1003.1,
+          "durationReadable": "14 h 52 min",
+          "arrivalISO": "2026-10-25T15:11:46.902000+00:00",
+          "checkpointSummary": {
+            "count": 22,
+            "requestedIntervalMiles": 50,
+            "effectiveIntervalMiles": 50,
+            "capped": false,
+            "maxPerRoute": 500,
+            "geometryDistanceMeters": 1612473.5,
+            "geometryDistanceMiles": 1001.9,
+            "providerDistanceMeters": 1614283.6,
+            "durationSeconds": 53566.9,
+            "samplingMethod": "haversine-distance-along-linestring",
+            "etaMethod": "distance-weighted-provider-duration"
+          },
+          "checkpointFirst": {
+            "checkpointId": "cp_2dfccc708663",
+            "routeId": "rt_7ca3c4a1894d",
+            "sequence": 1,
+            "coordinates": [
+              -87.632362,
+              41.881953
+            ],
+            "distanceFromStartMeters": 0,
+            "distanceFromStartMiles": 0,
+            "elapsedSeconds": 0,
+            "arrivalISO": "2026-10-25T00:19:00+00:00",
+            "interpolated": false
+          },
+          "checkpointLast": {
+            "checkpointId": "cp_b4bca2ecea63",
+            "routeId": "rt_7ca3c4a1894d",
+            "sequence": 22,
+            "coordinates": [
+              -104.986109,
+              39.741681
+            ],
+            "distanceFromStartMeters": 1612473.5,
+            "distanceFromStartMiles": 1001.9,
+            "elapsedSeconds": 53566.9,
+            "arrivalISO": "2026-10-25T15:11:46.902000+00:00",
+            "interpolated": false
+          },
+          "geometryPointCount": 10375
+        },
+        {
+          "routeId": "rt_ace16afeb065",
+          "label": "Route 2",
+          "distanceMiles": 1129.3,
+          "durationReadable": "16 h 47 min",
+          "arrivalISO": "2026-10-25T17:06:46.145000+00:00",
+          "checkpointSummary": {
+            "count": 24,
+            "requestedIntervalMiles": 50,
+            "effectiveIntervalMiles": 50,
+            "capped": false,
+            "maxPerRoute": 500,
+            "geometryDistanceMeters": 1815370,
+            "geometryDistanceMiles": 1128,
+            "providerDistanceMeters": 1817408,
+            "durationSeconds": 60466.1,
+            "samplingMethod": "haversine-distance-along-linestring",
+            "etaMethod": "distance-weighted-provider-duration"
+          },
+          "checkpointFirst": {
+            "checkpointId": "cp_9e7056d8b5b9",
+            "routeId": "rt_ace16afeb065",
+            "sequence": 1,
+            "coordinates": [
+              -87.632362,
+              41.881953
+            ],
+            "distanceFromStartMeters": 0,
+            "distanceFromStartMiles": 0,
+            "elapsedSeconds": 0,
+            "arrivalISO": "2026-10-25T00:19:00+00:00",
+            "interpolated": false
+          },
+          "checkpointLast": {
+            "checkpointId": "cp_3831d1a54071",
+            "routeId": "rt_ace16afeb065",
+            "sequence": 24,
+            "coordinates": [
+              -104.986109,
+              39.741681
+            ],
+            "distanceFromStartMeters": 1815370,
+            "distanceFromStartMiles": 1128,
+            "elapsedSeconds": 60466.1,
+            "arrivalISO": "2026-10-25T17:06:46.145000+00:00",
+            "interpolated": false
+          },
+          "geometryPointCount": 11986
+        }
+      ]
+    },
+    {
+      "status": 200,
+      "routeCount": 2,
+      "threeRoutesReturned": false,
+      "routes": [
+        {
+          "routeId": "rt_7ca3c4a1894d",
+          "label": "Route 1",
+          "distanceMiles": 1003.1,
+          "durationReadable": "14 h 52 min",
+          "arrivalISO": "2026-10-25T15:11:46.902000+00:00",
+          "checkpointSummary": {
+            "count": 12,
+            "requestedIntervalMiles": 50,
+            "effectiveIntervalMiles": 120.5,
+            "capped": true,
+            "maxPerRoute": 12,
+            "geometryDistanceMeters": 1612473.5,
+            "geometryDistanceMiles": 1001.9,
+            "providerDistanceMeters": 1614283.6,
+            "durationSeconds": 53566.9,
+            "samplingMethod": "haversine-distance-along-linestring",
+            "etaMethod": "distance-weighted-provider-duration"
+          },
+          "checkpointFirst": {
+            "checkpointId": "cp_2dfccc708663",
+            "routeId": "rt_7ca3c4a1894d",
+            "sequence": 1,
+            "coordinates": [
+              -87.632362,
+              41.881953
+            ],
+            "distanceFromStartMeters": 0,
+            "distanceFromStartMiles": 0,
+            "elapsedSeconds": 0,
+            "arrivalISO": "2026-10-25T00:19:00+00:00",
+            "interpolated": false
+          },
+          "checkpointLast": {
+            "checkpointId": "cp_b4bca2ecea63",
+            "routeId": "rt_7ca3c4a1894d",
+            "sequence": 22,
+            "coordinates": [
+              -104.986109,
+              39.741681
+            ],
+            "distanceFromStartMeters": 1612473.5,
+            "distanceFromStartMiles": 1001.9,
+            "elapsedSeconds": 53566.9,
+            "arrivalISO": "2026-10-25T15:11:46.902000+00:00",
+            "interpolated": false
+          },
+          "geometryPointCount": 10375
+        },
+        {
+          "routeId": "rt_ace16afeb065",
+          "label": "Route 2",
+          "distanceMiles": 1129.3,
+          "durationReadable": "16 h 47 min",
+          "arrivalISO": "2026-10-25T17:06:46.145000+00:00",
+          "checkpointSummary": {
+            "count": 24,
+            "requestedIntervalMiles": 50,
+            "effectiveIntervalMiles": 50,
+            "capped": false,
+            "maxPerRoute": 500,
+            "geometryDistanceMeters": 1815370,
+            "geometryDistanceMiles": 1128,
+            "providerDistanceMeters": 1817408,
+            "durationSeconds": 60466.1,
+            "samplingMethod": "haversine-distance-along-linestring",
+            "etaMethod": "distance-weighted-provider-duration"
+          },
+          "checkpointFirst": {
+            "checkpointId": "cp_9e7056d8b5b9",
+            "routeId": "rt_ace16afeb065",
+            "sequence": 1,
+            "coordinates": [
+              -87.632362,
+              41.881953
+            ],
+            "distanceFromStartMeters": 0,
+            "distanceFromStartMiles": 0,
+            "elapsedSeconds": 0,
+            "arrivalISO": "2026-10-25T00:19:00+00:00",
+            "interpolated": false
+          },
+          "checkpointLast": {
+            "checkpointId": "cp_3831d1a54071",
+            "routeId": "rt_ace16afeb065",
+            "sequence": 24,
+            "coordinates": [
+              -104.986109,
+              39.741681
+            ],
+            "distanceFromStartMeters": 1815370,
+            "distanceFromStartMiles": 1128,
+            "elapsedSeconds": 60466.1,
+            "arrivalISO": "2026-10-25T17:06:46.145000+00:00",
+            "interpolated": false
+          },
+          "geometryPointCount": 11986
+        }
+      ]
+    }
+  ],
+  "fixtureDisclosure": "Check 6 uses a synthetic capped-summary fixture via request interception; all other API data is live Mapbox-backed.",
+  "consoleIssues": [],
+  "failedRequests": [],
+  "results": [
+    {
+      "name": "1. Phase 4 landing renders (badge + form)",
+      "passed": true,
+      "detail": "Live routes + checkpoints · Phase 4"
+    },
+    {
+      "name": "2. Invalid form still blocked client-side without a route POST",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "3. Live 25-mile run: route cards + checkpoint count matches geometry/interval",
+      "passed": true,
+      "detail": "counts=42/47 geometryMi=1001.9/1128"
+    },
+    {
+      "name": "4. Provider-truth warning + destination checkpoint inclusion",
+      "passed": true,
+      "detail": "destinations=1001.9/1128 mi"
+    },
+    {
+      "name": "5. Live 50-mile run: fewer checkpoints, UI reflects spacing",
+      "passed": true,
+      "detail": "25mi=42 → 50mi=22"
+    },
+    {
+      "name": "6. Capped-spacing disclosure renders (SYNTHETIC labeled fixture; real provider never hit the cap)",
+      "passed": true,
+      "detail": "requested=50 effective=120.5 count=12"
+    },
+    {
+      "name": "7. No token in DOM, no browser persistence, no map canvas this phase",
+      "passed": true,
+      "detail": "storage={\"local\":0,\"session\":0}"
+    },
+    {
+      "name": "8. Mobile 420px layout renders route cards without horizontal page overflow",
+      "passed": true,
+      "detail": "overflow=0px"
+    },
+    {
+      "name": "9. No unexpected console errors/warnings or failed requests",
+      "passed": true,
+      "detail": "apiCalls=3"
+    }
+  ],
+  "allPassed": true
+}

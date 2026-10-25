@@ -1,0 +1,82 @@
+[
+  {
+    "name": "1. Form renders with labeled inputs",
+    "passed": true,
+    "detail": "all 4 controls + labels visible"
+  },
+  {
+    "name": "2. Interval radio group limited to 10/25/50, default 25",
+    "passed": true,
+    "detail": "[{\"value\":\"10\",\"checked\":false},{\"value\":\"25\",\"checked\":true},{\"value\":\"50\",\"checked\":false}]"
+  },
+  {
+    "name": "3. Backend status card reads Operating via /api/health/",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "4. Empty-form submit shows all four required-field errors",
+    "passed": true,
+    "detail": "4 alerts"
+  },
+  {
+    "name": "5. Whitespace-only origin rejected",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "6. Identical origin/destination rejected (raw and after trim)",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "7. Past departure rejected",
+    "passed": true,
+    "detail": "2026-10-24T00:50"
+  },
+  {
+    "name": "8a. Negative load weight rejected",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "8b. Zero load weight is client-valid",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "9. Valid submit → POST payload verified + honest success summary",
+    "passed": true,
+    "detail": "{\"origin\":\"Chicago, IL\",\"destination\":\"Denver, CO\",\"departureISO\":\"2026-10-24T05:50-07:00\",\"loadWeightLb\":34000,\"checkpointIntervalMiles\":50}"
+  },
+  {
+    "name": "10. Duplicate-submission guard: disabled while pending",
+    "passed": true,
+    "detail": "click while disabled: 0"
+  },
+  {
+    "name": "11. Backend 400 rendered field-by-field, inputs preserved",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "12. Network failure → honest service-unavailable message, inputs preserved",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "13. Unsupported interval unreachable via UI (radios only 10/25/50)",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "14. Mobile (420px) layout renders",
+    "passed": true,
+    "detail": ""
+  },
+  {
+    "name": "15. No unexpected console errors from app during flows",
+    "passed": true,
+    "detail": "(only expected network-path noise)"
+  }
+]

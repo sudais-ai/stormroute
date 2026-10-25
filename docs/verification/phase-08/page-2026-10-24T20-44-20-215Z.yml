@@ -1,0 +1,86 @@
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e10]:
+        - paragraph [ref=e11]: StormRoute
+        - paragraph [ref=e12]: Weather-aware truck routing
+      - generic [ref=e13]: Live routes + checkpoints + weather + risk + map · Phase 8
+  - main [ref=e14]:
+    - region [ref=e15]:
+      - heading "Enter the trip — see real route options before the wheels roll" [level=1] [ref=e16]
+      - paragraph [ref=e17]: Describe where the trip starts, where it ends, when you leave, and what you are hauling. StormRoute asks the Mapbox Directions API for genuine driving alternatives, samples each one into checkpoints at your chosen spacing, and shows distance, driving time, estimated arrival, checkpoint timing, and hourly weather (wind, rain, snow) at each checkpoint arrival. Risk comparison, route ranking, and the interactive map are now live.
+    - generic [ref=e18]:
+      - region [ref=e19]:
+        - heading "Plan a trip" [level=2] [ref=e20]
+        - paragraph [ref=e21]: Enter trip basics. StormRoute validates these details, generates real driving routes from live Mapbox data, samples each route into checkpoints with estimated arrival times, and fetches hourly weather (wind, rain, snow) from Open-Meteo — no mocked results. Risk scoring and the map arrive in later phases.
+        - generic [ref=e22]:
+          - generic [ref=e23]:
+            - generic [ref=e24]:
+              - text: Origin
+              - textbox "Origin" [ref=e25]:
+                - /placeholder: e.g. Chicago, IL
+            - generic [ref=e26]:
+              - text: Destination
+              - textbox "Destination" [ref=e27]:
+                - /placeholder: e.g. Denver, CO
+          - generic [ref=e28]:
+            - generic [ref=e29]:
+              - text: Departure (your local time)
+              - textbox "Departure (your local time)" [ref=e30]: 2026-10-24T15:45
+              - paragraph [ref=e31]: Converted to your browser's timezone before sending.
+            - generic [ref=e32]:
+              - text: Load weight (lb)
+              - spinbutton "Load weight (lb)" [ref=e33]: "34000"
+              - paragraph [ref=e34]: Cargo weight in pounds; 0 lb is valid for empty cargo.
+          - group "Weather checkpoint interval" [ref=e35]:
+            - generic [ref=e37]:
+              - generic [ref=e38] [cursor=pointer]:
+                - radio "10 miles" [ref=e39]
+                - text: 10 miles
+              - generic [ref=e40] [cursor=pointer]:
+                - radio "25 miles" [checked] [ref=e41]
+                - text: 25 miles
+              - generic [ref=e42] [cursor=pointer]:
+                - radio "50 miles" [ref=e43]
+                - text: 50 miles
+            - paragraph [ref=e44]: How often weather will be sampled along each route while the truck drives it.
+          - button "Find route options" [ref=e45]
+      - complementary [ref=e46]:
+        - generic [ref=e47]:
+          - heading "Runtime status" [level=2] [ref=e48]
+          - generic [ref=e49]:
+            - generic [ref=e51]:
+              - heading "Backend API" [level=3] [ref=e52]
+              - paragraph [ref=e53]: Python · Django + DRF
+            - paragraph [ref=e55]: Checking…
+            - paragraph [ref=e56]: Calling /api/health/ …
+        - generic [ref=e57]:
+          - heading "What comes after validation" [level=2] [ref=e58]
+          - list [ref=e59]:
+            - listitem [ref=e60]:
+              - paragraph [ref=e61]:
+                - text: Deterministic risk engine
+                - generic [ref=e62]: Phase 6
+              - paragraph [ref=e63]: wind / rain / snow thresholds with load-weight rules
+            - listitem [ref=e64]:
+              - paragraph [ref=e65]:
+                - text: Route recommendation
+                - generic [ref=e66]: Phase 7
+              - paragraph [ref=e67]: priority ranking by severity, then time
+            - listitem [ref=e68]:
+              - paragraph [ref=e69]:
+                - text: Interactive map
+                - generic [ref=e70]: Phase 8
+              - paragraph [ref=e71]: routes, checkpoints, risk levels, ETAs
+            - listitem [ref=e72]:
+              - paragraph [ref=e73]:
+                - text: Weather heatmap + forecast slider
+                - generic [ref=e74]: Phase 9
+              - paragraph [ref=e75]: 0–48 h, real timestamped forecast data
+          - paragraph [ref=e76]: None of these are running in this build — route generation, checkpoint sampling, and hourly weather are live, but risk scoring and the map do not exist yet.
+  - contentinfo [ref=e77]:
+    - generic [ref=e78]:
+      - paragraph [ref=e79]: StormRoute — Spotter AI Full Stack Developer assessment build. Risk estimates shown in later phases are checkpoint-based and will not guarantee real-world safety or check vehicle restrictions (bridge clearances, axle limits).
+      - paragraph [ref=e80]: "Map data attribution will include OpenStreetMap contributors via OpenFreeMap; weather attribution: Open-Meteo (CC BY 4.0)."

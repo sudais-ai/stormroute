@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-10-24T17:58:50.243Z",
+  "method": "script-driven real Chrome (playwright-core, channel=chrome, headless) via CDP — Playwright MCP clicks wedge (extension executor M_ID crash); navigation/snapshot/fill worked",
+  "appUrl": "http://localhost:5174/",
+  "viewports": {
+    "desktop": "1280x900",
+    "mobile": "420x900"
+  },
+  "apiCallsObserved": 0,
+  "apiSummaries": [],
+  "consoleIssues": [
+    "error: Failed to load resource: net::ERR_NETWORK_IO_SUSPENDED"
+  ],
+  "failedRequests": [
+    "POST http://localhost:5174/api/trips/routes/ — net::ERR_NETWORK_IO_SUSPENDED"
+  ],
+  "results": [
+    {
+      "name": "1. Phase 5 landing renders (badge + form)",
+      "passed": true,
+      "detail": "Live routes + checkpoints + weather · Phase 5"
+    },
+    {
+      "name": "2. Invalid form still blocked client-side without a route POST",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": ".EXECUTION",
+      "passed": false,
+      "detail": "expected a new /api/trips/routes/ response"
+    }
+  ],
+  "allPassed": false
+}
