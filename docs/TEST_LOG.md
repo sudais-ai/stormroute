@@ -827,3 +827,112 @@ Fresh team dev server on **5175** (PID 21876, `API_PROXY_TARGET=http://localhost
 - Round CLOSED (M5): all gates green before AND after every fix (80/80 tests / build exit 0 / lint 0 errors); browser QA 11/11; all 10 fixes applied; post-fix spot-check 12/12 ALL-CLEAR.
 - Frozen contract untouched this round: `*.test.*`, `lib/validation.ts`, `lib/heatmap.ts`, `main.tsx`.
 - Working servers as of this entry: team dev **5175** (fresh redesign bundle), backend **8001**; stale **5173/5174** (old bundle) left running and IGNORED; nothing committed or pushed.
+
+---
+
+## 2026-10-25 — Round 3: Performance + Clarity (third session of the day) — build → gates → reviews → fix-loop → multi-input proof matrix → round-3 QA (perf FAIL disclosed) → closure
+
+**Round:** root `PLAN.md` "ROUND 3 — Performance + Clarity". Trigger: user request — "Finding routes…" runs slow (50–90 s) and the output must read in easy English (map hints, plain verdicts, less text). The Round-2 frozen contract was untouched all round. Pipeline: build (3 agents, disjoint files) → gates → reviews → fix-loop round 1 → multi-input proof matrix → round-3 QA (perf + clarity + console + resilience) → docs closure (this entry). Code locations cited below were re-verified in the repo at docs time.
+
+### Build — backend (coder-fix)
+
+| Change | Location | Result |
+|---|---|---|
+| Parallel weather pass | `backend/core/services/weather.py` (:313) | `concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_PARALLEL_WORKERS)` — `_MAX_PARALLEL_WORKERS = 4` (:63); one future per unique 4dp-rounded coord (prior dedupe retained); results assigned serially in input order; deterministic FIRST-in-input-order error winner (docstring :293–296, comment :312) |
+| Shared corridor fetch | `weather.py` (:323) + `routing.py` (:506, :595) | NEW `fetch_corridor_forecasts` — one fetch per unique coord over the UNION of checkpoint keys + heatmap grid keys; `enrich` gained the optional corridor kwarg; `get_heatmap_for_routes(routes, pre_fetched_forecasts=corridor_forecasts)` wired (`weather_heatmap.py:302` param, None default → standalone fetcher path byte-equivalent) |
+| Parallel geocode pair | `routing.py` (:448) | `ThreadPoolExecutor(max_workers=_MAX_GEOCODE_WORKERS)`; position-ordered assignment; worker cap named `_MAX_GEOCODE_WORKERS = 2` (`routing.py:95`, fix-loop item 4) |
+| Degenerate-route loop-leak micro-fix | `weather.py` | `str(route.get("routeId",""))` guard |
+| Timing instrumentation | `routing.py` (:601–618) | `perf_counter` phases + ONE `logger.info` line: `route_timing geocode=… directions=… sample=… weather=… risk=… heatmap=… total=… routes=… ckpts=…` (seconds/counts only — no coords, no tokens/PII; visibility requires a LOGGING config — settings `LOGGING` deliberately unconfigured, disclosed in the code comment :603–605) |
+
+### Build — frontend (coder-new Y + refactor Z, disjoint files)
+
+| Agent | File / locator | Shipped |
+|---|---|---|
+| Y | `TripForm.tsx` :288–292 | pending `<p role="status">` between the submit button and formError, mounted ONLY while pending: "Real Mapbox and Open-Meteo calls. Usually 10 to 25 seconds." — never `role="alert"` (the single-alert invariant of the results view is preserved) |
+| Y | `TripForm.tsx` :310–314 | input-echo tail now "…mi weather stops" (interval value renders ahead of it) |
+| Y | `TripForm.tsx` :269 | interval hint "How often we check the weather along the route." (frozen visible group substring untouched) |
+| Y | `ForecastSlider.tsx` :75 | slider small print synced to the deck: "You choose the forecast hour with this slider." |
+| Y | `TripForm.tsx` `handleSubmit` (:110 / :119) | defensive catch sink reusing the frozen `SERVICE_UNAVAILABLE_COPY` (guard for the root-caused silent-idle; see findings (d)) |
+| Z | `RouteOptions.tsx` (verdict line) | easy-English verdict per card — 6 approved sentences, severity-first; Unknown only when no data-bearing level exists: No Travel "Weather makes this road not safe to drive." / Severe "Very bad weather stretches on this route." / High "Rough stretches; expect slow going." / Moderate "Some wind or rain to watch." / Low "Clear driving weather." / Unknown "Weather data is missing for parts of this route." |
+| Z | `RouteOptions.tsx` :85–101, :146–151 | reason line rendered "In plain words: " + the first explanation sentence, FULL raw explanation on the line's title tooltip (`reasonFull` prop); fix-loop item 1 later changed WHICH sentence leads (`plainLeadSentence`) — the prefix span is present in the shipped code (:148) |
+| Z | `MapViewport.tsx` :308, :313 | 2 map hint lines — sibling below the pointer-events-none legend wrapper: "Every dot is one stop on your route. Its color is the weather risk when your truck gets there."; directly under the legend footer: "Colors follow the hour you choose on the slider." (legend words frozen) |
+| Z | `App.tsx` :133–135 | empty-state bullets corrected (set to the PLAN deck verbatim in fix-loop item 2) |
+
+### Gates round 3 (runner — exact results)
+
+| Command | Result |
+|---|---|
+| `python manage.py test` | **200/200 OK** |
+| `npm run test` | **80/80 PASS** (3 files) |
+| `npm run build` (tsc -b && vite build) | **exit 0** — `index-BI5QBkB2.css` 123.78 kB (gzip 31.12); `index-tBGPAuE-.js` 1,312.32 kB (gzip 367.86); `maplibre-gl-worker` 518.80 kB |
+| `npm run lint` (oxlint) | **exit 0** — 0 errors / 5 historic warnings (same set, line drift only) |
+
+### Reviews
+
+- reviewer-quality: **9 findings** — incl. 1 MED reason-line number-dump case ("In plain words: Ranked 1st (0.0 severe mi | …)") and the FIFO geocode fixture race residual documented (the mock at the module boundary holds; concurrent pops could swap fixture order — NO test edits possible/allowed). Findings fed the fix-loop below.
+- reviewer-standards: deck-drift minors + hygiene.
+
+### Fix-loop round 1 (fixer — all fixes FIXED-GREEN)
+
+1. **RouteOptions plain-lead fix:** the visible reason now picks the FIRST explanation sentence that does NOT start with `/^(Ranked|Contains)\s/i` (`plainLeadSentence`, fallback = first sentence; banned-phrase cleanup retained). Pre-check proved `getByText('14 h 50 min')` and the distance pin match the STATS cells, not the reason line (test :329/:328) — the change was safe. Frozen-fixture visible text became "Route conditions: 3 Low." behind the "In plain words: " lead; the raw full text remains in the tooltip.
+2. **App empty-state bullets** → PLAN deck verbatim: "Confirm origin and destination are real city names." / "Try 50 miles between weather stops to find more options." / "Tap any dot on the map for details." (`App.tsx` :133–135).
+3. **ForecastSlider small print** → deck verbatim "You choose the forecast hour with this slider." (`ForecastSlider.tsx` :75).
+4. **routing.py:** the risk phase added to the ONE route_timing line (`risk=%.2f`) + the geocode worker cap named `_MAX_GEOCODE_WORKERS=2`.
+
+Gates re-run after the fixes: backend **200/200 OK** · frontend **80/80** · build **exit 0** (built 697 ms) · lint **0 errors**.
+
+### Multi-input proof matrix (browser-qa, earlier this session)
+
+3 full runs + 1 validation run — all PASS except as noted:
+
+- Chicago → Dallas runs: exact input echo (all 4 segments present), route cards, checkpoint spacing sentences, markers, 0 console errors.
+- Empty-submit validation: the 4 `role="alert"` field errors verbatim from `lib/validation.ts` (with isolation mapping).
+- NYC → Boston: slider +24 h flip observed on **20/20** markers.
+- Screenshots `product-quality-11..14` archived.
+
+**FINDINGS recorded (all disclosed, none hidden):**
+
+- **(a) Geometry-span display bug:** the span line rounds to 1,000-mi buckets, so live runs under 500 mi display "0 mi to 0 mi"; the frozen test pins the literal "sampled along the provider geometry from 0 mi to 1,000 mi" (`TripForm.test.tsx` :331). Display limitation disclosed in a code comment (`RouteOptions.tsx` :126–128). A test courtesy-amend is a user/architect decision — test files are frozen and were not touched.
+- **(b) Over-weight 91,000 lb accepted end-to-end:** no frontend or backend maximum exists; the spec disclaims vehicle-legality checks. Recorded as a user-decision candidate (see DECISIONS).
+- **(c) Disclosed transients:** first-POST `net::ERR_EMPTY_RESPONSE` ×3 across sessions; one proxied >120 s POST cut by the Vite `proxyTimeout`.
+- **(d) Dead-POST silently-idle state — root-caused:** a never-settling fetch (dev-proxy socket cut mid-flight) wedged submit until reload. TripForm's defensive catch (fix-loop, Y) now renders the honest service-unavailable copy for enumeration-independent failures; the never-settling fetch itself still wedges — the proper fix is `AbortSignal.timeout` in `api/trips.ts`, out of round ownership (api/* off-limits), flagged as a future item.
+
+### Round-3 QA (browser-qa, latest — perf + clarity + console + resilience)
+
+**Server truth-up:** the backend was restarted to serve the Round-3 code — old PID 20560 (ours) stopped; new `runserver 127.0.0.1:8001 --noreload` PID **10520**; `/api/health/` ok.
+
+**PERF — honest FAIL vs the round target (same Chicago → Denver 25 mi fixture):**
+
+| Metric | Baseline (second 2026-10-25 session) | Round 3 (this session, 3 runs) |
+|---|---|---|
+| POST wall | 69.5 s | **66.8 s / ≈57.7 s / 60.5 s** |
+| Improvement | — | **−13% vs baseline** (60.5 s best evidenced) |
+| Round target | — | ≤25 s — **NOT MET** |
+
+- Measured root cause (direct server-side replay of the exact browser payload; one route_timing line): `route_timing geocode=0.83 directions=1.11 sample=0.04 weather=50.06 risk=0.00 heatmap=0.16 total=52.21 routes=2 ckpts=[42,47]` → **190 unique coordinates (74 checkpoint + 116 grid) ÷ 4 workers ≈ 48 waves × ~1.05 s RTT**. Weather dominates; the shared fetch removed the duplicate pass, but the floor is per-coordinate RTT.
+- Direction recorded for the next round: **Open-Meteo multi-location batched URLs** — the existing heatmap `_fetch_batch` URL shape (≤50 locs per GET) could cut the weather phase to ~2–4 requests — **pending backend test-seam recon (mock shapes) before implementation**. No performance number was fabricated; the miss is reported as measured.
+
+**CLARITY — 6/6 PASS:** verdict lines match the badges; the plain-lead reason carries no number dumps in the visible text (live sample: "Average checkpoint risk: Low (0.00)."), with the full raw explanation in the tooltip; both map hints present; empty-state 3 bullets; slider sentence; exactly ONE `role="alert"` in the results flow; slider +24 h flips markers **89/89** to `forecast 2026-10-26T00:00`; the pending status line appeared while in flight and disappeared on completion.
+
+**Console (page):** 0 errors / 0 warnings. Disclosed session artifacts: 3× proxied `ERR_EMPTY_RESPONSE` (mid-flight reload/HMR), 1 dep `ERR_CONNECTION_REFUSED` at one reload, 1 stale-HMR `localShort` ReferenceError (the source contains no `localShort`; a fresh load is clean).
+
+**RESILIENCE (live, server log):** Open-Meteo returned HTTP 503 for 5 coords in a storm window 05:06–05:07 while the request still completed **HTTP 200 at 05:08:29** — graceful degradation behaved as designed (per-coord failures degrade; the run survives).
+
+### Screenshots + evidence (`docs/verification/product-quality/`)
+
+- `product-quality-11..14` — multi-input proof matrix (this round, earlier steps).
+- `product-quality-15/16/17` — round-3 QA (perf + clarity).
+
+### Honest limitations / notes
+
+- **Perf target NOT met** (see the table above). Root cause measured; the batching approach is a next-round DIRECTION, not a change made this round.
+- **Round 4 (plain-language output sweep) was OPENED as the next round** (fourth session). Honesty note: at docs time root `PLAN.md` contains only the Round-3 section (ends line 268) — no Round-4 section is present in that file yet; the next session must reconcile this before implementation.
+- Dead-POST residual: a never-settling fetch still wedges submit until reload; the proper fix is `AbortSignal.timeout` in `api/trips.ts`.
+- Geometry-span display "0 mi to 0 mi" for spans under 500 mi (frozen-test owner decision pending).
+- 91,000-lb end-to-end acceptance stands (user-decision candidate).
+
+### End state
+
+- Round 3 CLOSED with gates green before AND after the fix-loop (backend 200/200, frontend 80/80, build exit 0, lint 0 errors), clarity verified 6/6, and the speed goal honestly reported as MISSED (−13% vs baseline; ≤25 s target).
+- Working servers as of this entry: backend **8001** PID 10520 (`--noreload`, Round-3 code); team dev **5175** (fresh redesigned bundle, PID 21876); stale **5173/5174** left running and IGNORED.
+- Nothing committed or pushed. Round 4 opened (plain-language output sweep) — decisions in `docs/DECISIONS.md` (2026-10-25 third session).

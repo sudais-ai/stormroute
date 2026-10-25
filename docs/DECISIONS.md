@@ -275,4 +275,58 @@ The team's fresh dev server on **5175** (`API_PROXY_TARGET=http://localhost:8001
 
 ### 7. Frozen-contract discipline this round [confirmed]
 
-Tests (`*.test.*`), `lib/validation.ts`, `lib/heatmap.ts`, and `main.tsx` were not touched; the suite stayed 80/80 green before AND after every fix.
+Tests (`*.test.*`), `lib/validation.ts`, `lib/heatmap.ts`, `main.tsx` were not touched; the suite stayed 80/80 green before AND after every fix.
+
+---
+
+## 2026-10-25 (third session) — Round 3 Performance + Clarity decisions (per root `PLAN.md`) **[confirmed — gates green before AND after the fix-loop (backend 200/200 / frontend 80/80 / build exit 0 / lint 0 errors); clarity QA 6/6; perf honestly measured at −13% vs the 69.5 s baseline against the ≤25 s target]**
+
+Round record: `docs/TEST_LOG.md` (third 2026-10-25 entry). Every implementation detail below was re-verified against the repo at docs time.
+
+### 1. Parallel-fetch design: executor(4) per-coord futures, deterministic first-in-input-order error winner [confirmed]
+
+`weather.py` runs `concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_PARALLEL_WORKERS)` with the named constant `_MAX_PARALLEL_WORKERS = 4` (:63; futures at :313) — one future per unique 4dp-rounded coordinate (prior dedupe retained); results are assigned serially in input order and the error winner is the FIRST failing coordinate in input order (was last-wins in the former serial loop). Docstring/comments disclose this (:293–296, :312). No test depends on the error-winner order.
+
+### 2. Shared-corridor fetch (one fetch per unique coord) + heatmap `pre_fetched_forecasts` parameter [confirmed]
+
+NEW `fetch_corridor_forecasts` (`weather.py:323`) fetches the UNION of checkpoint keys + heatmap grid keys once per run; `enrich` gained an optional corridor kwarg; `get_heatmap_for_routes` gained `pre_fetched_forecasts=None` (`weather_heatmap.py:302`) — the standalone fetcher path stays byte-equivalent, so existing standalone callers/tests are unaffected. Wired at `routing.py:506` and `:595`.
+
+### 3. Geocode pair parallel (2 workers) — error semantics preserved; FIFO fixture race accepted as residual risk [confirmed]
+
+`ThreadPoolExecutor(max_workers=_MAX_GEOCODE_WORKERS)` with the named constant `_MAX_GEOCODE_WORKERS = 2` (`routing.py:95`), position-ordered assignment. Origin-failure surfacing is preserved; the destination call is still dispatched when the origin fails (accepted: one extra request on the failure path). FIFO geocode fixture race = accepted residual risk, documented by reviewer-quality: the mock at the module boundary holds, but concurrent pops could swap fixture order — tests are frozen and no test edits are possible/allowed.
+
+### 4. Timing instrumentation: ONE `route_timing` line, risk phase included, deliberately invisible by default [confirmed]
+
+`routing.py` times geocode / directions / sample / weather / risk / heatmap with `perf_counter` and emits ONE `logger.info` line at the end (seconds + counts only — no coordinates, no tokens/PII). The `risk=%.2f` phase was added by the fixer (the initial build timed everything except risk). `settings.LOGGING` is deliberately UNCONFIGURED, so the line is invisible by default; browser-measured POST timing remains the primary latency evidence (the round's perf table was measured in the browser, with ONE server-side replay confirming the phase split).
+
+### 5. Copy deck Round-3 final states (as shipped after the fix loop) [confirmed]
+
+- Pending status: "Real Mapbox and Open-Meteo calls. Usually 10 to 25 seconds." — `role="status"`, only while pending, never `role="alert"`.
+- Interval hint: "How often we check the weather along the route."
+- Echo tail: "…mi weather stops".
+- Slider small print: "You choose the forecast hour with this slider."
+- Verdicts: the 6 approved sentences, severity-first (No Travel → Low), Unknown only when no data-bearing level exists.
+- Reason line: plain lead WITHOUT the number dumps in the visible text; full raw explanation in the title tooltip.
+- Empty state: 3 deck-verbatim bullets; map hints ×2 (below-legend sibling + under-legend-footer line).
+
+**Reason-line supersession chain:** the initial build rendered "In plain words: " + the API's FIRST sentence → reviewer-quality flagged the number-dump case ("In plain words: Ranked 1st (0.0 severe mi | …)") → the fixer changed the SENTENCE PICK, not the prefix: the visible line = "In plain words: " + the first sentence that does NOT start with `/^(Ranked|Contains)\s/i` (`plainLeadSentence` in `RouteOptions.tsx:90`, fallback = first sentence; banned-phrase cleanup retained). CURRENT shipped state (at Round-4 planning time): prefix KEPT, ranking dumps skipped from the visible text, raw full text in the tooltip. Any further rewording ("kept/removed" for the prefix) belongs to Round 4 (plain-language output sweep, OPENED this session, not implemented); at docs time root `PLAN.md` contains only the Round-3 plan (ends line 268 — no Round-4 section found there).
+
+### 6. Known display limitation: geometry-span "0 mi to 0 mi" for live spans under 500 mi [confirmed]
+
+The span line is rounded to 1,000-mi buckets and the frozen test pins the literal "sampled along the provider geometry from 0 mi to 1,000 mi" (`TripForm.test.tsx:331`), so live spans under 500 mi display "0 mi to 0 mi". Disclosed in code comment `RouteOptions.tsx:126–128`. A courtesy-amend of the test is a user/architect decision — test files are frozen and were not touched.
+
+### 7. Weight edge: 91,000 lb accepted end-to-end (no max anywhere) [confirmed — user-decision candidate recorded]
+
+Spec-consistent: the assessment disclaims vehicle-legality checks (no bridge clearances / axle limits), and no frontend or backend maximum exists. Recorded rather than "fixed"; a sanity cap would be a product decision, flagged for the user.
+
+### 8. Defensive catch sink in TripForm `handleSubmit` — justified by the QA root cause, with a disclosed residual [confirmed]
+
+Unenumerated plan item: the catch reuses the frozen `SERVICE_UNAVAILABLE_COPY`. Justification: the QA silent-idle was root-caused to a never-settling fetch (dev-proxy socket cut mid-flight). Residual disclosed: a never-settling fetch still wedges submit until reload; the proper fix is `AbortSignal.timeout` in `api/trips.ts` (out of this round's ownership — api/* off-limits) → future round item.
+
+### 9. Open-Meteo 429: no added retries + named worker caps [confirmed]
+
+No retry logic was added for Open-Meteo HTTP 429 — the existing failure path handles it and the caps bound the burst (code comment `weather.py:60`). Named constants: `_MAX_PARALLEL_WORKERS = 4` (weather coordinates) and `_MAX_GEOCODE_WORKERS = 2` (geocode pair).
+
+### Frozen-contract discipline this round [confirmed]
+
+`*.test.*`, `lib/validation.ts`, `lib/heatmap.ts`, `main.tsx` untouched (plus the plan off-limits: `api/*`, `index.css`, backend `settings.py`, frozen backend user-facing strings). Suite stayed 80/80 and backend 200/200 before AND after the fix-loop. Nothing committed or pushed.
