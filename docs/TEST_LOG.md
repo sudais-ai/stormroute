@@ -23,7 +23,7 @@ Every real command and its actual outcome. Append-only. Fixtures are always labe
 
 - `git init` → Initialized empty Git repository (branch `master`).
 - Existing global Git config (user.name/user.email) inspected; it was left unchanged. Personal values intentionally not copied into project docs (redacted 2026-10-24).
-- Removed fabricated local overrides (`sudais@stormroute.dev`) so the user's real global identity applies.
+- Removed fabricated local git overrides (fictional email placeholder, later deleted) so the user's real global identity applies.
 
 ### MCP / Playwright verification
 
@@ -936,3 +936,138 @@ Gates re-run after the fixes: backend **200/200 OK** · frontend **80/80** · bu
 - Round 3 CLOSED with gates green before AND after the fix-loop (backend 200/200, frontend 80/80, build exit 0, lint 0 errors), clarity verified 6/6, and the speed goal honestly reported as MISSED (−13% vs baseline; ≤25 s target).
 - Working servers as of this entry: backend **8001** PID 10520 (`--noreload`, Round-3 code); team dev **5175** (fresh redesigned bundle, PID 21876); stale **5173/5174** left running and IGNORED.
 - Nothing committed or pushed. Round 4 opened (plain-language output sweep) — decisions in `docs/DECISIONS.md` (2026-10-25 third session).
+
+---
+
+## 2026-10-25 — Round 6: Light/Cream Theme Flip (fourth session)
+
+### Trigger
+
+User request: "Frontend ka background beh dark hai, sahi nahi lag raha. Text background ye sab thora white/cream aise visible colors use hona chahiye sahi se chale."
+
+### Scout audit findings (pre-edit)
+
+- `index.css` already contained light tokens (pre-existing in repo): `color-scheme: light`, body bg `#FAFAF9`, panel `#FFFFFF`, border `#E5E7EB`, text `#1A1A1A`, accent `#2563EB`, signal `#F59E0B`, frozen risk hexes intact (lines 40–45, 307–329).
+- 9 hardcoded leakage spots identified across 3 files:
+  - `MapViewport.tsx`: basemap `dark-matter` → `positron`; `ROUTE_LINE_SELECTED #5C9DFF` → `#2563EB`; `ROUTE_LINE_UNSELECTED #3D4654` → `#D1D5DB`; heatmap stroke `#0B0E14` → `#FAFAF9`; marker border `#3D4654` → `#D1D5DB`
+  - `ServiceStatusCard.tsx`: `STATUS_DOT_COLORS` literals → CSS var refs (`var(--color-signal)`, `var(--color-risk-low)`, `var(--color-risk-severe)`)
+  - `App.tsx`: footer "Carto dark-matter" → "Carto Positron"
+
+### Round 6 PLAN appended
+
+Appended to root `PLAN.md` as a new Round 6 section with agent↛file ownership, done criteria, and parallel spawn plan.
+
+### Build (coder-fix + refactor — parallel)
+
+| File | Changes |
+|---|---|
+| `frontend/src/index.css` | **No token changes needed** — already light theme tokens present (color-scheme: light, bg #FAFAF9, panel #FFFFFF, border #E5E7EB, text #1A1A1A, accent #2563EB, signal #F59E0B, frozen risk hexes L40-45 & L307-329 untouched). |
+| `frontend/src/components/MapViewport.tsx` | 5 edits: ROUTE_LINE_SELECTED #5C9DFF→#2563EB; ROUTE_LINE_UNSELECTED #3D4654→#D1D5DB; basemap dark-matter→positron; heatmap stroke #0B0E14→#FAFAF9; marker border #3D4654→#D1D5DB. |
+| `frontend/src/components/ServiceStatusCard.tsx` | STATUS_DOT_COLORS literal hexes → CSS var refs (var(--color-signal), var(--color-risk-low), var(--color-risk-severe)). |
+| `frontend/src/App.tsx` | Footer "Carto dark-matter" → "Carto Positron". |
+
+### Frozen guards honored (zero drift)
+
+- 6 risk hexes in `index.css` L40–45 **unchanged**.
+- `.risk-dot-*` fills L307–329 **unchanged**.
+- `lib/heatmap.ts`, `lib/riskColors.ts`, `lib/validation.ts`, `lib/heatmap.test.ts` — **untouched**.
+- ZERO copy string changes (no user-facing text edits).
+
+### Gates (runner — exact results)
+
+| Gate | Command | Result |
+|---|---|---|
+| Backend tests | `manage.py test core` | **200/200 OK** (exit 0) |
+| Frontend tests | `npm run test` | **80/80 PASS** (3 files, vitest) |
+| TypeScript | `npx tsc --noEmit` | **exit 0** |
+| Production build | `npm run build` | **PASS** — 4.58 s, worker chunk emitted |
+| Lint | `npm run lint` | **0 errors** (5 historic warnings only, unchanged) |
+
+### Browser QA
+
+- Spawned (browser-qa agent) — will verify: light chrome, light Carto Positron basemap, frozen risk dots intact on markers/heatmap/legend, WCAG AA contrast.
+- Screenshots planned: `docs/verification/round-06/` (slots 21–23).
+
+### Fix-loop
+
+None needed so far — all gates green on first pass.
+
+### Evidence
+
+- Root `PLAN.md` Round 6 section appended.
+- Modified files: `index.css` (no token changes), `MapViewport.tsx`, `ServiceStatusCard.tsx`, `App.tsx`.
+- All automated gates pass; browser verification pending completion.
+
+---
+
+## 2026-10-25 — Round 8: Final compliance audit + scoring hardening + client-delivery cleanup (fifth session)
+
+**Round:** final pre-submission round — verify the assessment PDF against the spec, close the scoring test-coverage gap, harden tie determinism, clean the repo for client delivery, author the two compliance reports. No feature code changed except `scoring.py` (determinism only).
+
+### PDF discovery + extraction
+
+| Step | Result |
+|---|---|
+| Original assessment PDF | **FOUND** — `docs/fs-assessment-spotter.pdf` (2 pages; copied from the user's disk into the repo) |
+| Inspection | text extracted **verbatim via pypdf**; compared against `docs/ASSESSMENT_SPEC.md` → **FAITHFUL MATCH** (all thresholds, load rules, 4-priority ranking, deliverables, 40/40/15/5 weighting) |
+| PDF extra | "Prioritize correctness and clarity over extra features." — honored by the cleanup below |
+| Spec header | updated to cite the PDF as direct source |
+
+### Scout audit findings (pre-edit)
+
+- Scoring module had **zero dedicated test coverage** (ranking only indirectly exercised) → coverage gap opened for this round.
+- Full-value ranking ties were **input-order-dependent** (no final tiebreaker) — spec §7 requires determinism.
+- Threshold verification cross-check (line refs): wind `test_risk.py` L60–84; rain L172–196; snow L229–253; BoundaryMatrixTests L686–741; load rules exactly 30,000 (L113), 30,001 (L104/109), exactly 40,000 (L131), 40,001 (L122/127), ≥55 any load (L94–101); frontend mirror pinned `heatmap.test.ts:197–206`.
+- Repo carried internal-only docs + dead code unsuitable for client delivery (list below).
+
+### Coder-fix — scoring.py tiebreaker (honest execution note)
+
+- Change: `routeId` added as the **final tiebreaker** via tuple-pair comparison `(to_tuple(), route_id)` in `__lt__`/`__le__` (`scoring.py:72–81`); `__eq__` unchanged (:83). Full-value ties now resolve by the stable SHA-derived route id, no longer input-order-dependent (spec §7).
+- **Honesty note:** the agent could not self-run the suite in its sandbox; the **orchestrator ran the gates** below. Nothing is claimed as agent-executed.
+
+### Coder-new — NEW `backend/core/test_scoring.py` (24 tests, 10 classes)
+
+- Classes: LexicographicPriorityTests(5) :132 · TieDeterminismTests(3) :217 · NoTravelExclusionTests(3) :278 · AllIneligibleTests(1) :328 · SingleRouteTests(1) :368 · FewerThanThreeTests(2) :387 · ExplanationTests(3) :421 · RiskMileMathTests(3) :557 · PayloadShapeTests(1) :620 · UnavailableRiskTests(2) :667.
+- Includes a proof test that a **weighted sum would reverse the priority order** the spec fixes (spec §7 prohibition).
+- **Honesty note:** file was **static-verified by the agent, then executed by the orchestrator** (gates below). The 200 existing backend tests were NOT touched (frozen contract honored).
+
+### Client-delivery cleanup
+
+- Edits by agents: `.gitignore` updated (root `AGENTS.md` now ignored, kept on disk); `README.md` polished client-ready (prereqs, venv/pip/migrate note — the API defines no DB models, Mapbox token guide, `API_PROXY_TARGET`, smoke test); `ASSESSMENT_SPEC.md` header cites the PDF.
+- Deletions + build executed by the **orchestrator**. Removed from git: `AGENTS.md` (gitignored, kept on disk), `PLAN.md`, `FINAL_ASSESSMENT_CHECKLIST.md`, `docs/STATUS.md`, `docs/MISSING_INFO.md`, `docs/PRODUCT_UX_AUDIT.md`, `docs/VERIFICATION_PROTOCOL.md`, `docs/PROJECT_GOAL.md`, unintegrated `frontend/src/components/LocationPicker.tsx` + `locations.json` ×2, 2 stale QA artifacts.
+
+### GATES (orchestrator-run, 2026-10-25 — verbatim)
+
+| Gate | Command | Verbatim result |
+|---|---|---|
+| Backend (200 prior + 24 NEW scoring) | `manage.py test` | **Ran 224 tests in 1.460s — OK** |
+| Frontend | `npm run test` | **Test Files 3 passed (3) / Tests 80 passed (80)** |
+| Production build (post-cleanup) | `npm run build` | **exit 0 — ✓ built in 1.80s** |
+| Lint | `npm run lint` | **0 errors, 5 historic warnings** |
+
+### Docs authored this round
+
+- `docs/FINAL_ASSESSMENT_COMPLIANCE_AUDIT.md` — 21-section compliance audit (PDF evidence, R1–R12 matrix, thresholds/boundaries with test line refs, scoring suite, gates, rubric, honest misses).
+- `docs/ASSESSMENT_REQUIREMENT_MATRIX.md` — navigable R1–R12 matrix (R7 split 7a–7d; R9 BLOCKED user-gated; live-severe NOT VERIFIED).
+- `docs/DECISIONS.md` + this log: fifth-session entries appended.
+
+### Honest misses carried forward (unchanged this round)
+
+- Performance ≤25 s target **MISSED** — best measured 60.5 s vs 69.5 s baseline (−13%); Open-Meteo batching landed after the measurement; re-measure pending.
+- Live Severe/No-Travel weather **never demonstrated live** (unit + synthetic proven only).
+- Never-settling-fetch residual (`AbortSignal.timeout` future item); geometry-span "0 mi to 1,000 mi" frozen-test literal; 91,000 lb accepted (spec disclaims vehicle legality); Playwright MCP click-wedge → script-driven fallback historically.
+
+### Contrast fix-loop + live re-verification (same fifth session, after the QA reports)
+
+- browser-qa counted the Round-6 light theme at **5/16 AA PASS** with 11 failures (code-level table; live flow was blocked — frontend dev server down in that window and Playwright absent from the agent's tool catalog).
+- Orchestrator fix (files: `frontend/src/index.css`, `MapViewport.tsx`, `RouteOptions.tsx`): `--color-text-3`/`--color-ink-3` `#9CA3AF` → `#6B7280`; NEW `--color-risk-text-*` AA badge-text tokens (#166534/#92400E/#9A3412/#B91C1C/#991B1B/#475569) — tint backgrounds keep the frozen full-hue 13% mixes; NEW `--color-signal-text` `#92400E` (Rank # chip); `ROUTE_LINE_UNSELECTED` + marker border `#D1D5DB` → `#6B7280`. Frozen hexes (`risk-dot-*`, `lib/heatmap.ts` pins, heatmap corridor) untouched.
+- Gates after fix: `npm run test` → **Test Files 3 passed (3) / Tests 80 passed (80)**; `npm run build` → **✓ built in 3.12s**, exit 0; `npm run lint` → **0 errors** (backend untouched by this change; last full backend run in this session: **Ran 224 tests in 1.460s — OK**).
+- Live re-verification (orchestrator-driven Playwright, real browser): helper/placeholder **4.63:1**, six badge text/tint pairs **5.47–6.79:1**, Rank # chip **6.41:1** → **16/16 AA PASS**; full flow — pending line + aria-busy + "Finding routes…" ✓, echo "**Chicago, IL → Denver, CO · leaves Oct 29, 08:30 · 34,000 lb cargo · weather stops every 25 mi**" ✓, results region exactly **1 role="alert"** (Mapbox honest 2-routes warning) ✓, "with weather data: 23" per route ✓, Weather stops (42)/(47) collapsibles ✓, map loaded ✓, slider 0→48 chip "+48 h from forecast start" then 0→24 ✓, cleared-form validation **4/4 verbatim role="alert"** messages ✓, mobile 480×800 **no horizontal scroll** (scrollWidth 470 ≤ 481) ✓; **console 0 errors / 0 warnings**.
+- Screenshots saved (real captures): `docs/verification/product-quality/` **24** initial pending light-theme, **25** results full page, **26** slider +24 h, **27** validation alerts, **28** mobile 480.
+- Standards review (read-only): 0 blockers, 3 minor doc issues (README stale "200" count → fixed to 224; Deliverables "PENDING" → "**BLOCKED (user-gated)**"; TEST_LOG fabricated-identity echo reworded) — all fixed; `git check-ignore` confirms AGENTS.md ignored; frozen zones confirmed untouched (backend diff this round = scoring.py + NEW test_scoring.py only).
+
+### End state
+
+- Servers left alive: backend **8001**, frontend **5175** (background).
+- Git: local `master` ahead of origin expectations — commits `7e914ea`, `ae00ac8`, `8a590cd`, `97c3552`, `b7b6bc0` + Round-8 changes staged/unstaged; **NO push** (user-gated).
+- Deliverables (GitHub / hosted app / Loom): **NOT DONE — awaiting explicit user instruction.**

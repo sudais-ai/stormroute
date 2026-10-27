@@ -330,3 +330,72 @@ No retry logic was added for Open-Meteo HTTP 429 — the existing failure path h
 ### Frozen-contract discipline this round [confirmed]
 
 `*.test.*`, `lib/validation.ts`, `lib/heatmap.ts`, `main.tsx` untouched (plus the plan off-limits: `api/*`, `index.css`, backend `settings.py`, frozen backend user-facing strings). Suite stayed 80/80 and backend 200/200 before AND after the fix-loop. Nothing committed or pushed.
+
+---
+
+## 2026-10-25 (fourth session) — Round 6 Light/Cream Theme Flip: token-first design [confirmed — gates green: backend 200/200, frontend 80/80, tsc 0, build PASS 4.58 s, lint 0 errors]
+
+Trigger: user request — "Frontend ka background beh dark hai, sahi nahi lag raha. Text background ye sab thora white/cream aise visible colors use hona chahiye sahi se chale."
+
+### Scout audit findings (pre-edit)
+
+- `frontend/src/index.css` already contained light tokens (pre-existing in repo): `color-scheme: light`, body bg `#FAFAF9`, panel `#FFFFFF`, border `#E5E7EB`, text `#1A1A1A`, accent `#2563EB`, signal `#F59E0B`, frozen risk hexes intact (L40–45, L307–329).
+- 9 hardcoded leakage spots identified across 3 files:
+  - `MapViewport.tsx`: basemap `dark-matter` → `positron`; `ROUTE_LINE_SELECTED #5C9DFF` → `#2563EB`; `ROUTE_LINE_UNSELECTED #3D4654` → `#D1D5DB`; heatmap stroke `#0B0E14` → `#FAFAF9`; marker border `#3D4654` → `#D1D5DB`.
+  - `ServiceStatusCard.tsx`: `STATUS_DOT_COLORS` literals → CSS var refs (`var(--color-signal)`, `var(--color-risk-low)`, `var(--color-risk-severe)`).
+  - `App.tsx`: footer "Carto dark-matter" → "Carto Positron".
+
+### Round 6 PLAN appended
+
+Appended to root `PLAN.md` as a new Round 6 section with agent↛file ownership, done criteria, and parallel spawn plan.
+
+### Build (coder-fix + refactor — parallel on disjoint files)
+
+| File | Changes |
+|---|---|
+| `frontend/src/index.css` | **No token changes needed** — already light theme tokens present; frozen risk hexes untouched. |
+| `frontend/src/components/MapViewport.tsx` | 5 edits: route line selected/unselected colors to accent/border tokens; basemap dark-matter→positron; heatmap stroke to body bg; marker border to border token. |
+| `frontend/src/components/ServiceStatusCard.tsx` | STATUS_DOT_COLORS literal hexes → CSS var refs (signal, risk-low, risk-severe). |
+| `frontend/src/App.tsx` | Footer "Carto dark-matter" → "Carto Positron". |
+
+### Frozen guards honored (zero drift)
+
+- 6 risk hexes in `index.css` L40–45 **unchanged**.
+- `.risk-dot-*` fills L307–329 **unchanged**.
+- `lib/heatmap.ts`, `lib/riskColors.ts`, `lib/validation.ts`, `lib/heatmap.test.ts` — **untouched**.
+- ZERO copy string changes (no user-facing text edits).
+
+### Gates (exact results)
+
+| Gate | Command | Result |
+|---|---|---|
+| Backend tests | `manage.py test core` | **200/200 OK** (exit 0) |
+| Frontend tests | `npm run test` | **80/80 PASS** (3 files, vitest) |
+| TypeScript | `npx tsc --noEmit` | **exit 0** |
+| Production build | `npm run build` | **PASS** — 4.58 s, worker chunk emitted |
+| Lint | `npm run lint` | **0 errors** (5 historic warnings only, unchanged) |
+
+### Browser QA
+
+- Spawned (browser-qa agent) — will verify: light chrome, light Carto Positron basemap, frozen risk dots intact on markers/heatmap/legend, WCAG AA contrast.
+- Screenshots planned: `docs/verification/round-06/` (slots 21–23).
+
+### Fix-loop
+
+None needed — all gates green on first pass.
+
+### Decision summary
+
+Light theme flip via token-first design — index.css @theme already light; 9 hardcoded spots in 3 files edited to token refs; Carto Positron basemap; frozen 6 hexes preserved; all gates green.
+
+---
+
+## 2026-10-25 (fifth session) — Round 8: Final compliance audit + scoring determinism hardening + client-delivery cleanup **[confirmed — gates green: backend "Ran 224 tests in 1.460s — OK", frontend 80/80, build exit 0 (✓ built in 1.80s, post-cleanup), lint 0 errors / 5 historic warnings]**
+
+1. **Assessment PDF found, copied into the repo, and verbatim-verified.** `docs/fs-assessment-spotter.pdf` (2 pages, from the user's disk) was text-extracted via pypdf and compared line-by-line against `docs/ASSESSMENT_SPEC.md` — FAITHFUL MATCH (thresholds, load rules, 4-priority ranking, deliverables, 40/40/15/5 weighting; the PDF adds "Prioritize correctness and clarity over extra features."). The spec header now cites the PDF as its direct source.
+2. **Scoring coverage gap closed with a NEW dedicated suite.** `backend/core/test_scoring.py` — 24 tests, 10 classes (lexicographic priorities incl. a weighted-sum-reversal proof, No Travel exclusion, no-safe-route, tie determinism, explanations, risk-mile math, payload shape, unavailable risk). The existing 200 backend tests were NOT touched — frozen contract honored.
+3. **routeId final tiebreaker for spec-§7 determinism.** Full-value ties in ranking were input-order-dependent; `__lt__`/`__le__` now compare the tuple pair `(to_tuple(), route_id)` (`scoring.py:72–81`) so ties resolve by the stable SHA-derived route id; `__eq__` (:83) unchanged. Verified by the 224-test run.
+4. **Client-delivery cleanup** (honoring the PDF's "correctness and clarity over extra features"): removed from git — root `AGENTS.md` (gitignored, kept on disk), `PLAN.md`, `FINAL_ASSESSMENT_CHECKLIST.md`, `docs/STATUS.md`, `docs/MISSING_INFO.md`, `docs/PRODUCT_UX_AUDIT.md`, `docs/VERIFICATION_PROTOCOL.md`, `docs/PROJECT_GOAL.md`, unintegrated `LocationPicker.tsx` + `locations.json` ×2, 2 stale QA artifacts; `.gitignore` updated; `README.md` polished client-ready (prereqs, venv/pip/migrate note, Mapbox token guide, API_PROXY_TARGET, smoke test). Frozen contracts (tests, `lib/heatmap.ts`, `lib/validation.ts`, `main.tsx`) untouched.
+5. **Compliance reports authored:** `docs/FINAL_ASSESSMENT_COMPLIANCE_AUDIT.md` (21 sections) + `docs/ASSESSMENT_REQUIREMENT_MATRIX.md` (R1–R12, R7 split 7a–7d). Honest misses recorded: perf ≤25 s target MISSED (best 60.5 s vs 69.5 s baseline, −13%); live Severe/No-Travel demo NOT VERIFIED (unit + synthetic only).
+6. **Deliverables remain user-gated:** GitHub push, hosted URL, and Loom walkthrough are NOT DONE — nothing publishes without explicit instruction.
+7. **WCAG AA contrast fix-loop (browser-qa found 11 failures → fixed → live-verified 16/16 PASS).** QA's computed-contrast spot checks (5/16 pass) surfaced: muted text `#9CA3AF` at 2.54:1, placeholder 2.43:1, all six risk-badge text colors on their 13% tints 1.94–4.06:1, the Rank # signal chip 1.99:1, and unselected route line `#D1D5DB` at 1.41:1 on the light basemap. Fix (token-level, tint/dots/heatmap/legend frozen hexes untouched): `--color-text-3`/`--color-ink-3` → `#6B7280` (4.63–4.83:1); NEW badge-text tokens `--color-risk-text-{low #166534, moderate #92400E, high #9A3412, severe #B91C1C, no-travel #991B1B, unknown #475569}` (5.47–6.79:1 on tints, tints still mixed from the frozen full hues); NEW `--color-signal-text #92400E` used by the Rank # chip; `ROUTE_LINE_UNSELECTED` + marker border → `#6B7280` (~4.5:1 vs basemap, ≥3:1 non-text). Re-verified live in the browser: 16/16 AA PASS (computed), full flow re-run (pending → exact echo "Chicago, IL → Denver, CO · leaves Oct 29, 08:30 · 34,000 lb cargo · weather stops every 25 mi" → 1 alert → weather data 23/route → slider chip flip → validation 4/4 verbatim alerts → mobile 480×800 no horizontal scroll), console 0 errors/0 warnings, screenshots 24–28 saved, and all gates re-run green (frontend 80/80, build ✓ 3.12s, lint 0 errors; backend untouched by the CSS change, last full run 224/224 OK).

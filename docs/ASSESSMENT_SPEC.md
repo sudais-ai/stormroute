@@ -1,6 +1,6 @@
 # StormRoute — Authoritative Assessment Specification
 
-Source: recruiter brief "Full Stack Developer — Weather-Aware Truck Routing" (Spotter AI assessment), reproduced in the Phase 1 kickoff prompt. This file is the authority for requirements. Items are marked:
+Source: **original assessment PDF** `docs/fs-assessment-spotter.pdf` ("Full Stack Developer — Weather-Aware Truck Routing", Spotter AI assessment; 2 pages, text-extracted and verified verbatim 2026-10-25 against this file — FAITHFUL MATCH). This file is the authority for requirements. Items are marked:
 
 - **[ASSESSMENT]** — stated by the recruiter; must not be changed.
 - **[INTERPRETATION]** — our documented reading of an ambiguous point; changes require a `docs/DECISIONS.md` entry.
