@@ -49,7 +49,10 @@ _OPEN_METEO_BASE = "https://api.open-meteo.com/v1/forecast"
 # (connect, read) seconds — must never hang indefinitely.
 _REQUEST_TIMEOUT = (5, 15)
 # Horizon: slider covers 0–48 h inclusive → 49 provider hourly buckets.
+# Also covers future departure up to ~48h. Open-Meteo supports up to 16 days;
+# 5 days = 120h covers future departure + 48h slider.
 _FORECAST_HOURS = 48
+_FORECAST_DAYS = 5
 # Grid spacing (~11 km). Deliberately coarse: matches the provider's own
 # grid resolution so extra density would imply a precision we do not have.
 _DEFAULT_GRID_SPACING_METERS = 11_000.0
@@ -204,7 +207,7 @@ def _build_batch_url(coords: List[Tuple[float, float]]) -> str:
         f"?latitude={lats}&longitude={lons}"
         f"&hourly=wind_speed_10m,rain,snowfall"
         f"&wind_speed_unit=mph&precipitation_unit=inch&timezone=UTC"
-        f"&forecast_days=3"
+        f"&forecast_days={_FORECAST_DAYS}"
     )
 
 
@@ -245,6 +248,56 @@ def _fetch_batch(coords: List[Tuple[float, float]]) -> List[Optional[Dict[str, L
     return out
 
 
+def fetch_batched_payloads(
+    loc_keys: Sequence[Tuple[float, float]],
+    timeout: Tuple[float, float] = _REQUEST_TIMEOUT,
+    batch_size: int = _DEFAULT_BATCH_SIZE,
+) -> Dict[Tuple[float, float], Dict[str, Any]]:
+    """Fetch RAW single-location payloads for many (lat, lon) keys.
+
+    Transport twin of `_fetch_batch`: reuses `_build_batch_url` and the
+    array-or-object response split, chunked to ≤ `batch_size` coordinates
+    per GET, preserving input order. Input keys use the corridor key format
+    (rounded (lat, lon) as produced by `route_grid_keys`); the returned map
+    is keyed the same way, so key alignment is by construction.
+
+    Never raises for provider issues: failed/invalid chunks are simply
+    absent from the returned map (the same degradation `_fetch_batch`
+    expresses with None entries). Used by the shared corridor fetch
+    (core.services.weather) for its grid-only coordinate domain.
+    """
+    payloads: Dict[Tuple[float, float], Dict[str, Any]] = {}
+    keys: List[Tuple[float, float]] = list(loc_keys)
+    for start in range(0, len(keys), max(batch_size, 1)):
+        chunk = keys[start : start + max(batch_size, 1)]
+        coords = [(lon, lat) for lat, lon in chunk]
+        try:
+            resp = requests.get(_build_batch_url(coords), timeout=timeout)
+        except (requests.Timeout, requests.ConnectionError, requests.RequestException) as e:
+            logger.warning("batched payload fetch failed: %s", type(e).__name__)
+            continue
+        if resp.status_code != 200:
+            logger.warning("batched payload HTTP %s", resp.status_code)
+            continue
+        try:
+            data = resp.json()
+        except (ValueError, json.JSONDecodeError):
+            continue
+        # Multi-location → array aligned with request order; single → object.
+        location_payloads: List[Any] = data if isinstance(data, list) else [data]
+        if len(location_payloads) != len(chunk):
+            logger.warning(
+                "batched payload size mismatch: requested=%s received=%s",
+                len(chunk),
+                len(location_payloads),
+            )
+            continue
+        for key, payload in zip(chunk, location_payloads):
+            if isinstance(payload, dict):
+                payloads[key] = payload
+    return payloads
+
+
 @dataclass(frozen=True)
 class HeatmapGridPoint:
     longitude: float
@@ -264,22 +317,22 @@ class RouteHeatmap:
     forecast_hours: int
 
 
-def get_heatmap_for_routes(
+def route_grid_keys(
     routes: List[dict],
-    fetcher: Callable[..., List[Optional[Dict[str, List[float | None]]]]] = _fetch_batch,
-    forecast_hours: int = _FORECAST_HOURS,
     max_points_per_route: int = _DEFAULT_MAX_POINTS_PER_ROUTE,
-    batch_size: int = _DEFAULT_BATCH_SIZE,
     grid_spacing_meters: float = _DEFAULT_GRID_SPACING_METERS,
-) -> List[RouteHeatmap]:
-    """Generate heatmaps for every route, sharing one deduped fetch set."""
-    heatmaps: List[RouteHeatmap] = []
-    routes = routes or []
+) -> Tuple[Dict[str, List[Tuple[float, float]]], List[Tuple[float, float]]]:
+    """Sample per-route grid points (pure math, no provider calls).
 
-    # 1. Grid coordinate samples per route (deduped across routes).
+    Returns (route_grids by routeId, ordered union of rounded (lat, lon)
+    keys). The coordinates are DEDUPLICATED across ALL routes. Public so the
+    shared corridor fetch (core.services.weather.fetch_corridor_forecasts)
+    can cover the heatmap universe without re-deriving it here;
+    get_heatmap_for_routes uses this same helper for assembly.
+    """
     route_grids: Dict[str, List[Tuple[float, float]]] = {}
     dedupe: Dict[Tuple[float, float], None] = {}  # ordered set
-    for route in routes:
+    for route in routes or []:
         route_id = str(route.get("routeId", ""))
         geometry = route.get("geometry") or {}
         coords = geometry.get("coordinates") or []
@@ -289,27 +342,61 @@ def get_heatmap_for_routes(
         route_grids[route_id] = points
         for lon, lat in points:
             dedupe.setdefault(_round_key(lat, lon), None)
+    return route_grids, list(dedupe.keys())
 
-    if not dedupe:
+
+def get_heatmap_for_routes(
+    routes: List[dict],
+    fetcher: Callable[..., List[Optional[Dict[str, List[float | None]]]]] = _fetch_batch,
+    forecast_hours: int = _FORECAST_HOURS,
+    max_points_per_route: int = _DEFAULT_MAX_POINTS_PER_ROUTE,
+    batch_size: int = _DEFAULT_BATCH_SIZE,
+    grid_spacing_meters: float = _DEFAULT_GRID_SPACING_METERS,
+    pre_fetched_forecasts: Optional[Dict[Tuple[float, float], Dict[str, Any]]] = None,
+) -> List[RouteHeatmap]:
+    """Generate heatmaps for every route, sharing one deduped fetch set.
+
+    `pre_fetched_forecasts` optionally carries the shared corridor fetch map
+    (raw Open-Meteo payloads keyed by rounded (lat, lon)); when present the
+    heatmap series are derived from it and NO second provider pass runs.
+    Standalone servers/tests without it keep the batched `_fetch_batch` path
+    via `fetcher`, unchanged.
+    """
+    heatmaps: List[RouteHeatmap] = []
+    routes = routes or []
+
+    # 1. Grid coordinate samples per route (deduped across routes).
+    route_grids, all_coords = route_grid_keys(
+        routes, max_points_per_route=max_points_per_route, grid_spacing_meters=grid_spacing_meters
+    )
+
+    if not all_coords:
         return [
-            RouteHeatmap(route_id, [], None, None, forecast_hours)
+            RouteHeatmap(str(route.get("routeId", "")), [], None, None, forecast_hours)
             for route in routes
         ]
 
-    all_coords = list(dedupe.keys())  # (lat, lon) rounded keys
-
-    # 2. Batched provider fetch over the union of coordinates.
+    # 2. Per-coordinate series: either derive from the shared fetch payloads
+    # (they hold the same first-49h hourly buckets the batch pass did) or
+    # batch-fetch over the union of coordinates.
     forecast_by_key: Dict[Tuple[float, float], Optional[Dict[str, List[float | None]]]] = {}
-    for start in range(0, len(all_coords), max(batch_size, 1)):
-        batch = all_coords[start : start + max(batch_size, 1)]
-        coords = [(lon, lat) for lat, lon in batch]
-        try:
-            series_list = fetcher(coords)
-        except Exception as e:  # never propagate into the route pipeline
-            logger.warning("heatmap fetcher raised %s", type(e).__name__)
-            series_list = [None] * len(batch)
-        for (lat, lon), series in zip(batch, series_list):
-            forecast_by_key[(lat, lon)] = series
+    if pre_fetched_forecasts is not None:
+        for grid_key in all_coords:
+            payload = pre_fetched_forecasts.get(grid_key)
+            forecast_by_key[grid_key] = (
+                None if payload is None else _series_from_response(payload, forecast_hours)
+            )
+    else:
+        for start in range(0, len(all_coords), max(batch_size, 1)):
+            batch = all_coords[start : start + max(batch_size, 1)]
+            coords = [(lon, lat) for lat, lon in batch]
+            try:
+                series_list = fetcher(coords)
+            except Exception as e:  # never propagate into the route pipeline
+                logger.warning("heatmap fetcher raised %s", type(e).__name__)
+                series_list = [None] * len(batch)
+            for (lat, lon), series in zip(batch, series_list):
+                forecast_by_key[(lat, lon)] = series
 
     # 3. Assemble per-route heatmaps from the shared fetch data.
     for route in routes:
@@ -373,7 +460,9 @@ __all__ = [
     "WeatherProviderError",
     "WeatherRateLimitError",
     "WeatherTimeoutError",
+    "fetch_batched_payloads",
     "generate_route_grid_points",
     "get_heatmap_for_routes",
     "heatmap_to_payload",
+    "route_grid_keys",
 ]

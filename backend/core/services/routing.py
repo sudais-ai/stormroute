@@ -52,6 +52,8 @@ from __future__ import annotations
 import hashlib
 import logging
 import math
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import quote
@@ -70,6 +72,7 @@ from core.services.weather import (
     WeatherRateLimitError,
     WeatherTimeoutError,
     enrich_checkpoints_with_weather,
+    fetch_corridor_forecasts,
 )
 from core.services.weather_heatmap import (
     get_heatmap_for_routes,
@@ -89,6 +92,7 @@ _REQUEST_TIMEOUT = (5, 25)
 # The app asks Mapbox for the primary route plus up to two alternatives.
 _ROUTES_REQUESTED = 3
 _MILES_PER_METER = 0.000621371
+_MAX_GEOCODE_WORKERS = 2
 
 
 class ProviderError(Exception):
@@ -435,11 +439,24 @@ def generate_routes(validated_trip: dict) -> dict:
     Input is TripInputSerializer.validated_data (departure already normalized
     to UTC). Output shape is defined here and mirrored by frontend types.
     """
+    total_start = time.perf_counter()
     token = _token_or_raise()
-    origin = geocode_place(validated_trip["origin"], stage="origin")
-    destination = geocode_place(validated_trip["destination"], stage="destination")
+    # Geocode both places concurrently (worker cap 2 — one call per place);
+    # results are assigned by position (origin first) so failure/stage
+    # attribution keeps today's semantics: an origin failure surfaces first.
+    geocode_start = time.perf_counter()
+    with ThreadPoolExecutor(max_workers=_MAX_GEOCODE_WORKERS) as geocode_pool:
+        origin_future = geocode_pool.submit(geocode_place, validated_trip["origin"], "origin")
+        destination_future = geocode_pool.submit(
+            geocode_place, validated_trip["destination"], "destination"
+        )
+        origin = origin_future.result()
+        destination = destination_future.result()
+    geocode_seconds = time.perf_counter() - geocode_start
 
+    directions_start = time.perf_counter()
     raw_routes = fetch_direction_routes(origin, destination, token)
+    directions_seconds = time.perf_counter() - directions_start
     if not raw_routes:
         raise NoRoutesError()
 
@@ -457,6 +474,7 @@ def generate_routes(validated_trip: dict) -> dict:
 
     interval_miles = validated_trip["checkpointIntervalMiles"]
     checkpoint_cap = _checkpoint_cap()
+    sample_start = time.perf_counter()
     for index, route in enumerate(routes):
         arrival = departure + timedelta(seconds=route["durationSeconds"])
         route["arrivalISO"] = arrival.isoformat()
@@ -473,12 +491,24 @@ def generate_routes(validated_trip: dict) -> dict:
             raise RouteGeometryError() from None
         route["checkpoints"] = sampled["checkpoints"]
         route["checkpointSummary"] = sampled["summary"]
+    sample_seconds = time.perf_counter() - sample_start
 
     # Phase 5: enrich checkpoints with hourly weather from Open-Meteo.
     # This runs after all routes have checkpoints; any weather failure is
     # surfaced as a structured error without losing the route data.
+    # Shared corridor fetch: checkpoint enrichment (arrival-hour subsets) and
+    # the heatmap builder (first-49h series per point) both derive from ONE
+    # pre-fetched coordinate map, so each unique coordinate costs a single
+    # Open-Meteo request per run. Open-Meteo 429 policy: no retry logic is
+    # added — the service's fixed worker cap bounds the burst and existing
+    # failure paths surface the structured error.
+    weather_start = time.perf_counter()
+    corridor_forecasts, corridor_error = fetch_corridor_forecasts(routes)
     try:
-        routes, weather_summaries = enrich_checkpoints_with_weather(routes)
+        routes, weather_summaries = enrich_checkpoints_with_weather(
+            routes,
+            corridor=(corridor_forecasts, corridor_error),
+        )
     except WeatherError as e:
         # Log the internal detail but return a safe structured error.
         logger.warning("weather_enrichment failed: %s", e.code)
@@ -486,10 +516,12 @@ def generate_routes(validated_trip: dict) -> dict:
         for route in routes:
             route["weatherError"] = e.as_payload()
         weather_summaries = []
+    weather_seconds = time.perf_counter() - weather_start
 
     # Phase 6: deterministic weather risk analysis per checkpoint + route summary.
     # Runs after weather enrichment; uses the same load weight for all routes.
     load_lb = float(validated_trip["loadWeightLb"])
+    risk_start = time.perf_counter()
     risk_summaries = []
     for route in routes:
         try:
@@ -546,6 +578,7 @@ def generate_routes(validated_trip: dict) -> dict:
                 "error": "Risk analysis unavailable",
             }
             risk_summaries.append(route["riskSummary"])
+    risk_seconds = time.perf_counter() - risk_start
 
     # Phase 7: deterministic route scoring & recommendation (lexicographic ranking).
     recommendation = rank_and_recommend(routes, risk_summaries)
@@ -553,13 +586,36 @@ def generate_routes(validated_trip: dict) -> dict:
     count = len(routes)
 
     # Phase 9: gridded forecast heatmaps for the corridor (0–48 h).
-    # Heatmap failures must never break the route response.
+    # Heatmap failures must never break the route response. Series derive
+    # from the shared corridor fetch (no second provider pass); standalone
+    # callers/tests without it keep the heatmap's own batched fetch.
+    heatmap_start = time.perf_counter()
     heatmaps = []
     try:
-        heatmaps = get_heatmap_for_routes(routes)
+        heatmaps = get_heatmap_for_routes(routes, pre_fetched_forecasts=corridor_forecasts)
     except Exception:
         logger.warning("heatmap_generation failed", exc_info=True)
         heatmaps = []
+    heatmap_seconds = time.perf_counter() - heatmap_start
+
+    total_seconds = time.perf_counter() - total_start
+    checkpoint_count = sum(len(route.get("checkpoints", [])) for route in routes)
+    # This line only becomes visible with an explicit project LOGGING config
+    # (settings deliberately untouched); browser-measured POST timing is the
+    # primary latency evidence. Counts only — no coordinates/tokens/PII.
+    logger.info(
+        "route_timing geocode=%.2f directions=%.2f sample=%.2f "
+        "weather=%.2f risk=%.2f heatmap=%.2f total=%.2f routes=%s ckpts=%s",
+        geocode_seconds,
+        directions_seconds,
+        sample_seconds,
+        weather_seconds,
+        risk_seconds,
+        heatmap_seconds,
+        total_seconds,
+        count,
+        checkpoint_count,
+    )
     return {
         "trip": {
             "origin": validated_trip["origin"],

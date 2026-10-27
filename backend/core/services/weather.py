@@ -39,6 +39,7 @@ Error taxonomy — safe structured errors only, no provider text/URL echo:
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 import math
 from dataclasses import dataclass
@@ -55,6 +56,13 @@ _REQUEST_TIMEOUT = (5, 15)
 # Forecast horizon needed for the 0-48h slider + margin.
 # Open-Meteo supports up to 16 days; 3 days is 72h, plenty for 48h.
 _FORECAST_DAYS = 3
+# Worker cap for parallel per-coordinate forecast fetches (stdlib
+# concurrent.futures only). Open-Meteo HTTP 429 policy: NO retries are added —
+# the fixed cap bounds request bursts and the existing failure path surfaces
+# the structured error exactly as the sequential loop did.
+# 8 (free-tier ~600 calls/min safe): checkpoint domain only; grid domain is
+# batched at ≤50 coordinates per GET, so it adds no per-coordinate calls.
+_MAX_PARALLEL_WORKERS = 8
 
 
 class WeatherError(Exception):
@@ -257,8 +265,130 @@ def _collect_provider_forecast_bounds(forecast_data: dict[str, Any]) -> tuple[st
     return times[0], times[-1]
 
 
+def _grouped_checkpoint_coords(
+    routes: list[dict],
+) -> dict[tuple[float, float], list[tuple[dict, str, datetime]]]:
+    """Group checkpoints by unique (lat, lon) to avoid duplicate fetches.
+
+    Key: (rounded_lat, rounded_lon). Validation happens here; a malformed
+    checkpoint raises ValueError exactly as it always has.
+    """
+    coord_to_checkpoints: dict[tuple[float, float], list[tuple[dict, str, datetime]]] = {}
+    for route in routes:
+        for cp in route.get("checkpoints", []):
+            cp_id, lat, lon, arrival_utc = _validate_checkpoint_input(cp)
+            key = (round(lat, 4), round(lon, 4))
+            coord_to_checkpoints.setdefault(key, []).append((cp, cp_id, arrival_utc))
+    return coord_to_checkpoints
+
+
+def _fetch_many_forecasts(
+    coord_keys: list[tuple[float, float]],
+) -> tuple[dict[tuple[float, float], dict[str, Any]], tuple[float, float] | None, WeatherError | None]:
+    """Fetch Open-Meteo forecasts for every unique coordinate in parallel.
+
+    Each unique rounded coordinate is one `_fetch_open_meteo` call (the HTTP
+    seam stays in this module — tests mock at this boundary), executed by a
+    fixed-size ThreadPoolExecutor so the request burst stays bounded. All
+    futures complete before anything is consumed: `executor.map` preserves
+    input order, and the serial assignment below into the returned maps keeps
+    downstream state deterministic (no shared mutable state touched by
+    workers). Failure semantics: the FIRST failure in input order wins
+    (`weather_error` was effectively last-wins in the old serial loop;
+    input-order-first is deterministic and carries the same payload shapes).
+    Only WeatherError family failures are captured, like before — anything
+    unexpected still propagates.
+    """
+    def _one(key: tuple[float, float]):
+        lat, lon = key
+        try:
+            return (key, _fetch_open_meteo(lat, lon), None)
+        except WeatherError as e:
+            return (key, None, e)
+
+    forecasts: dict[tuple[float, float], dict[str, Any]] = {}
+    error_key: tuple[float, float] | None = None
+    weather_error: WeatherError | None = None
+    if coord_keys:
+        # map() yields results in input order, so the error winner above is
+        # deterministic regardless of which worker finishes first.
+        with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_PARALLEL_WORKERS) as pool:
+            for key, payload, err in pool.map(_one, coord_keys):
+                if err is not None:
+                    if weather_error is None:
+                        weather_error, error_key = err, key
+                else:
+                    forecasts[key] = payload
+    return forecasts, error_key, weather_error
+
+
+def _fetch_batched_grid(
+    grid_keys: list[tuple[float, float]],
+) -> dict[tuple[float, float], dict[str, Any]]:
+    """Batched transport for the GRID-ONLY corridor coordinate domain.
+
+    Delegates to the heatmap module's multi-location transport
+    (`fetch_batched_payloads` — ≤50 coordinates per GET, input order
+    preserved, key alignment by construction) so grid-only coordinates cost
+    a small number of HTTP calls instead of one request per coordinate.
+    Returns only successfully fetched keys: failures stay MISSING from the
+    returned map (they degrade to "unknown" heatmap points exactly like
+    today's batch-failure behavior) and NEVER surface as a route-level
+    weatherError. No retries; 429 handling stays with the checkpoint
+    domain's `_fetch_open_meteo` error path.
+    """
+    from core.services.weather_heatmap import fetch_batched_payloads  # noqa: PLC0415
+    return fetch_batched_payloads(grid_keys)
+
+
+def fetch_corridor_forecasts(
+    routes: list[dict],
+) -> tuple[dict[tuple[float, float], dict[str, Any]], WeatherError | None]:
+    """One shared corridor fetch for both weather consumers.
+
+    Merges the checkpoint coordinate universe (route enrichment) with the
+    heatmap grid coordinate universe so every unique rounded coordinate costs
+    exactly ONE Open-Meteo request per run; both consumers derive their needs
+    from the returned map (checkpoint enrichment = arrival-hour subsets,
+    heatmap builder = first-49h series per point).
+
+    Transport split (Round 5):
+    - CHECKPOINT coordinates keep the per-coordinate executor path
+      (`_fetch_open_meteo` seam — tests mock at this boundary), with the
+      same first-failure-in-input-order error semantics as before.
+    - GRID-ONLY coordinates (route grid keys minus checkpoint keys) use the
+      batched multi-location transport (`_fetch_batched_grid`); their
+      failures produce MISSING keys, never a route-level weatherError.
+
+    Returns
+    (forecasts, weather_error) where weather_error is limited to failures on
+    CHECKPOINT coordinates: route-level weatherError semantics stay as before,
+    while grid-only failures degrade to "unknown" heatmap points exactly like
+    today's batch-failure behavior.
+    """
+    coord_to_checkpoints = _grouped_checkpoint_coords(routes)
+    checkpoint_keys = list(coord_to_checkpoints.keys())
+    checkpoint_set = set(checkpoint_keys)
+    # Lazy import: weather_heatmap imports error classes from this module at
+    # load time, so the dependency direction can't be a top-level cycle.
+    from core.services.weather_heatmap import route_grid_keys  # noqa: PLC0415
+    _grids, grid_keys = route_grid_keys(routes)
+    grid_only_keys = [key for key in grid_keys if key not in checkpoint_set]
+    forecasts, _error_key, error = _fetch_many_forecasts(checkpoint_keys)
+    # The executor pass covers ONLY checkpoint coordinates now, so any
+    # captured failure is checkpoint-domain by construction (the old
+    # combined pass had the same outcome: input order put checkpoint keys
+    # first, so the first failure attributed to corridor_error was always
+    # a checkpoint coordinate).
+    corridor_error = error
+    if grid_only_keys:
+        forecasts.update(_fetch_batched_grid(grid_only_keys))
+    return forecasts, corridor_error
+
+
 def enrich_checkpoints_with_weather(
     routes: list[dict],
+    corridor: tuple[dict[tuple[float, float], dict[str, Any]], WeatherError | None] | None = None,
 ) -> tuple[list[dict], list[RouteWeatherSummary]]:
     """
     Main entry point: given the Phase 4 routes (each has checkpoints),
@@ -266,31 +396,25 @@ def enrich_checkpoints_with_weather(
       - the same routes list, mutated in place with `weather` field on each checkpoint
       - a list of RouteWeatherSummary for the response metadata
 
+    `corridor` optionally carries a pre-fetched shared forecast map from
+    fetch_corridor_forecasts so enrichment derives from it without issuing
+    its own HTTP pass.
+
     This function makes live HTTP calls to Open-Meteo. In tests, it is
     mocked at the module boundary (requests.get or _fetch_open_meteo).
     """
     if not routes:
         return routes, []
 
-    # Group checkpoints by unique (lat, lon) to avoid duplicate fetches
-    # Key: (rounded_lat, rounded_lon)
-    coord_to_checkpoints: dict[tuple[float, float], list[tuple[dict, str, datetime]]] = {}
-    for route in routes:
-        for cp in route.get("checkpoints", []):
-            cp_id, lat, lon, arrival_utc = _validate_checkpoint_input(cp)
-            key = (round(lat, 4), round(lon, 4))
-            coord_to_checkpoints.setdefault(key, []).append((cp, cp_id, arrival_utc))
-
-    # Fetch once per unique coordinate
-    forecasts: dict[tuple[float, float], dict[str, Any]] = {}
-    weather_error: WeatherError | None = None
-    for (lat, lon), cps in coord_to_checkpoints.items():
-        try:
-            forecasts[(lat, lon)] = _fetch_open_meteo(lat, lon)
-        except WeatherError as e:
-            weather_error = e
-            # Don't break - continue to try other coordinates, but we'll
-            # mark all routes with the error at the end
+    # Validation + grouping pass — raises ValueError on malformed checkpoints
+    # exactly as before, even when corridor carries a pre-fetched map.
+    coord_to_checkpoints = _grouped_checkpoint_coords(routes)
+    if corridor is None:
+        forecasts, _error_key, weather_error = _fetch_many_forecasts(
+            list(coord_to_checkpoints.keys())
+        )
+    else:
+        forecasts, weather_error = corridor
 
     # If any fetch failed, mark all routes with the error and return early
     if weather_error:
