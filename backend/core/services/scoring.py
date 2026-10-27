@@ -46,6 +46,7 @@ class RouteScore:
     2. high_miles (fewer is better)
     3. avg_risk_ordinal (lower is better)
     4. duration_seconds (shorter is better)
+    5. route_id (final tiebreak so full-value ties are deterministic)
 
     All values are None-safe: None is treated as worst (infinite).
     """
@@ -71,12 +72,15 @@ class RouteScore:
     def __lt__(self, other: "RouteScore") -> bool:
         if not isinstance(other, RouteScore):
             return NotImplemented
-        return self.to_tuple() < other.to_tuple()
+        # Final tiebreak: stable routeId keeps full-value ties deterministic
+        # regardless of input order (spec §7). str() wrap keeps the final pair
+        # str-vs-str even for a hypothetical non-str id (total order guarantee).
+        return (self.to_tuple(), str(self.route_id)) < (other.to_tuple(), str(other.route_id))
 
     def __le__(self, other: "RouteScore") -> bool:
         if not isinstance(other, RouteScore):
             return NotImplemented
-        return self.to_tuple() <= other.to_tuple()
+        return (self.to_tuple(), str(self.route_id)) <= (other.to_tuple(), str(other.route_id))
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RouteScore):
