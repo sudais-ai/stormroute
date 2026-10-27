@@ -112,6 +112,12 @@ command `npm run build`, publish `dist` (already in `netlify.toml`). Then open
 `netlify.toml` and replace `RENDER-BACKEND-URL.onrender.com` in the `/api/*`
 redirect with your real Render domain, and redeploy.
 
+**Frontend alternative: Vercel** — `frontend/vercel.json` has the same setup as
+rewrites (`/api/*` → Render, SPA fallback). In the Vercel dashboard set the
+project **Root Directory = `frontend`** (build/output auto-detect), then expand
+the `RENDER-BACKEND-URL` placeholder in `frontend/vercel.json` with the real
+Render domain and let the auto-redeploy land.
+
 **Behavior notes (honest):** the frontend already calls relative `/api/*`
 endpoints, so no code change is needed — only the proxy rule. Netlify's proxy
 layer may cut very long responses (route generation takes 60–120 s live); the
