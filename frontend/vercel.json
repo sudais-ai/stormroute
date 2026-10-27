@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://RENDER-BACKEND-URL.onrender.com/api/$1"
+      "destination": "https://stormroute-backend.vercel.app/api/$1"
     },
     {
       "source": "/(.*)",

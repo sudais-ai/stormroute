@@ -1,4 +1,4 @@
-# Netlify config for the StormRoute frontend (React + Vite).
+﻿# Netlify config for the StormRoute frontend (React + Vite).
 #
 # The frontend calls relative /api/* endpoints (src/api/trips.ts), so the API
 # proxy below is what connects the deployed UI to the Render backend. Replace
@@ -21,7 +21,7 @@
 # 1) API proxy FIRST: forward all /api/* calls to the Render backend as-is.
 [[redirects]]
   from = "/api/*"
-  to = "https://RENDER-BACKEND-URL.onrender.com/api/:splat"
+  to = "https://stormroute-backend.vercel.app/api/:splat"
   status = 200
   force = true
 
@@ -30,3 +30,4 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
