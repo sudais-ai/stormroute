@@ -27,3 +27,7 @@ backend/staticfiles/
 Thumbs.db
 .idea/
 .vscode/
+
+# Internal working files — not part of the client deliverable
+AGENTS.md
+PLAN.md
