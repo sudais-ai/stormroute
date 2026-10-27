@@ -82,6 +82,44 @@ npm run preview -- --port 4179
 
 (Use any free port; `vite.config.ts` routes `/api` through `preview.proxy`.)
 
+## Deploy (Render backend + Netlify frontend)
+
+Config files live at repo root: `render.yaml` (backend blueprint) and `netlify.toml`
+(frontend build + `/api/*` proxy). No secrets are committed anywhere — you supply
+account-specific values in each platform's dashboard.
+
+**1) Backend on Render** — New Blueprint → pick this repo → `render.yaml` is read
+automatically (service `stormroute-backend`, `backend/` root, migrate on build,
+gunicorn start with `--timeout 180`). On first sync, fill these env vars (no real
+values needed in the repo):
+
+| Env var | Set it to |
+|---|---|
+| `DJANGO_ALLOWED_HOSTS` | your Render service domain, e.g. `stormroute-backend.onrender.com` |
+| `CORS_ALLOWED_ORIGINS` | your Netlify site URL, e.g. `https://stormroute.netlify.app` |
+| `MAPBOX_ACCESS_TOKEN` | your Mapbox token (server-side only; never bundled into the frontend) |
+
+`DJANGO_DEBUG` is pinned to `0` in the blueprint. The free plan sleeps after
+~15 min idle — the first request after a nap takes ~50 s to cold-start.
+
+Two `check --deploy` residuals are accepted on purpose: `mail.E001` (the app
+sends no email — the console mail backend is startproject boilerplate and
+harmless to logs) and the `W004/W009-style` secret warnings your Render env
+closes automatically via `DJANGO_SECRET_KEY` (`generateValue: true`).
+
+**2) Frontend on Netlify** — New site from Git → build base `frontend`,
+command `npm run build`, publish `dist` (already in `netlify.toml`). Then open
+`netlify.toml` and replace `RENDER-BACKEND-URL.onrender.com` in the `/api/*`
+redirect with your real Render domain, and redeploy.
+
+**Behavior notes (honest):** the frontend already calls relative `/api/*`
+endpoints, so no code change is needed — only the proxy rule. Netlify's proxy
+layer may cut very long responses (route generation takes 60–120 s live); the
+180 s gunicorn timeout on Render is the source of truth, but if a first request
+times out at Netlify, retry once on a warm instance. The sqlite database only
+holds Django system tables (no app models), so the free-tier ephemeral disk is
+harmless here.
+
 ## Assessment Evidence
 
 | Requirement | Status | Evidence |

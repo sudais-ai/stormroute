@@ -1,0 +1,32 @@
+# Netlify config for the StormRoute frontend (React + Vite).
+#
+# The frontend calls relative /api/* endpoints (src/api/trips.ts), so the API
+# proxy below is what connects the deployed UI to the Render backend. Replace
+# the placeholder URL with your Render service's public URL after the backend
+# deploys (keep the /api/:splat suffix).
+#
+# NOTE (honest limitation): Netlify's proxy rewrite layer is sized for typical
+# page/app traffic. StormRoute's POST /api/trips/routes/ takes 60-120 s
+# (Mapbox + one Open-Meteo call per checkpoint). Netlify does not publish a
+# documented hard timeout for redirect-proxy responses, but long reactions
+# there may be cut earlier than the 180 s gunicorn timeout allows. Render's
+# free tier also cold-starts after ~15 min idle. If a first request times out
+# at the proxy, retry once — the second hit lands on a warm instance.
+
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+# 1) API proxy FIRST: forward all /api/* calls to the Render backend as-is.
+[[redirects]]
+  from = "/api/*"
+  to = "https://RENDER-BACKEND-URL.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# 2) SPA fallback SECOND: let the React router own everything else.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

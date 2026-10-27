@@ -8,3 +8,5 @@ django-cors-headers==4.9.0
 python-dotenv==1.2.4
 # Outbound provider calls: Mapbox geocode/directions, Open-Meteo weather (Phase 5).
 requests==2.34.2
+# Production WSGI server (Render web service start command; dev uses runserver).
+gunicorn==23.0.0

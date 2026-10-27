@@ -27,9 +27,16 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Env-driven: local dev defaults to DEBUG on (dev parity unchanged; see
+# render.yaml / README "Deploy" section for the production values).
+DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = []
+# Comma-separated DJANGO_ALLOWED_HOSTS (e.g. "stormroute-backend.onrender.com").
+# Default empty keeps dev behavior unchanged (localhost works while DEBUG on).
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')
+    if h.strip()
+]
 
 
 # Application definition
@@ -125,12 +132,33 @@ RISK_VERY_HEAVY_LOAD_THRESHOLD_LB = 40000
 
 # Cross-origin access from the Vite dev frontend (localhost:5173 is also proxied
 # through the Vite dev server, so CORS is a fallback for direct calls).
+# The production frontend domain is merged in from the comma-separated
+# CORS_ALLOWED_ORIGINS env var (e.g. "https://stormroute.netlify.app");
+# render.yaml sets it on Render. Local values kept for dev parity.
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     'http://localhost:5174',
     'http://127.0.0.1:5174',
+] + [
+    o.strip() for o in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+    if o.strip()
 ]
+
+# Production security headers/rerouting — applied ONLY when explicitly enabled
+# via DJANGO_SECURE=1 (render.yaml sets it). Never enable automatically for
+# DEBUG or the test runner: units run with DEBUG=False, and an unconditional
+# SECURE_SSL_REDIRECT would turn every test http(s) request into a 301.
+_PROD_SECURE = os.environ.get('DJANGO_SECURE', '0') == '1'
+if _PROD_SECURE:
+    SECURE_SSL_REDIRECT = True
+    # Render terminates TLS at its edge proxy; trust the forwarded protocol.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Database
