@@ -17,8 +17,10 @@ function riskLabel(risk: string): string {
   }
 }
 
+type OverallLevel = "no_travel" | "severe" | "high" | "moderate" | "low" | "unknown"
+
 /** Route-level rollup: the most urgent level present in any checkpoint. */
-function overallRisk(summary: RouteRiskSummary | undefined): string {
+function overallRisk(summary: RouteRiskSummary | undefined): OverallLevel {
   if (!summary) return "unknown"
   if (summary.noTravelCount > 0) return "no_travel"
   if (summary.severeCount > 0) return "severe"
@@ -26,6 +28,20 @@ function overallRisk(summary: RouteRiskSummary | undefined): string {
   if (summary.moderateCount > 0) return "moderate"
   if (summary.lowCount > 0) return "low"
   return "unknown"
+}
+
+// Card-verdict rule (Round 3 deck): severity-first. The most severe level
+// present wins, in the order no_travel > severe > high > moderate > low;
+// Unknown is used only when no data-bearing level exists, which is exactly
+// the fallback overallRisk already applies. Sentences restate the already
+// computed counts; nothing here recomputes risk or changes methodology.
+const VERDICT_BY_LEVEL: Record<OverallLevel, string> = {
+  no_travel: "Weather makes this road not safe to drive.",
+  severe: "Very bad weather stretches on this route.",
+  high: "Rough stretches; expect slow going.",
+  moderate: "Some wind or rain to watch.",
+  low: "Clear driving weather.",
+  unknown: "Weather data is missing for parts of this route.",
 }
 
 const numberFmt0 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 })
@@ -56,19 +72,39 @@ function conditionRate(inPerHour: number | null): string {
   return inPerHour === null ? "n/a" : `${inPerHour.toFixed(3)} in/hr`
 }
 
-/** First sentence of an API explanation; drops any banned ranking phrasing. */
-function firstSentence(text: string | undefined): string | null {
-  if (!text) return null
-  // Sentence end = terminator followed by a capital letter (or end of string),
-  // so decimal numbers like "0.0" never truncate the line mid-phrase.
-  const match = text.match(/^(.+?[.!?])(?=\s+[A-Z]|$)/)
-  const first = match ? match[1] : text
+/** Drops any banned ranking phrasing from one explanation sentence. */
+function cleanSentencePart(raw: string): string | null {
   return (
-    first
+    raw
       .replace(/top pick by combined ranking\.?/gi, "")
       .replace(/combined ranking\.?/gi, "")
       .trim() || null
   )
+}
+
+/** Plain-lead rule (Round 3 deck): the visible reason is the FIRST explanation
+ * sentence that does NOT start with "Ranked "/"Contains " (backend ranking
+ * dumps are skipped so a new user reads an easy first line). When every
+ * sentence is a ranking dump, the raw first-sentence view is kept unchanged.
+ * The full raw string always stays on the line's title tooltip (reasonFull). */
+function plainLeadSentence(text: string | undefined): string | null {
+  if (!text) return null
+  // Sentence end = terminator followed by a capital letter (or end of string),
+  // so decimal numbers like "0.0" never truncate the line mid-phrase.
+  const sentences = text.match(/(.+?[.!?])(?=\s+[A-Z]|$)/g) ?? []
+  for (const sentence of sentences) {
+    if (/^(Ranked|Contains)\s/i.test(sentence.trim())) continue
+    const cleaned = cleanSentencePart(sentence)
+    if (cleaned) return cleaned
+  }
+  return firstSentence(text)
+}
+
+/** First sentence of an API explanation; drops any banned ranking phrasing. */
+function firstSentence(text: string | undefined): string | null {
+  if (!text) return null
+  const match = text.match(/^(.+?[.!?])(?=\s+[A-Z]|$)/)
+  return cleanSentencePart(match ? match[1] : text)
 }
 
 function RouteCard({
@@ -77,14 +113,18 @@ function RouteCard({
   recommended,
   rank,
   reason,
+  reasonFull,
 }: {
   route: RouteOption
   riskSummary: RouteRiskSummary | undefined
   recommended: boolean
   rank: number | null
   reason: string | null
+  reasonFull: string | null
 }) {
   const summary = route.checkpointSummary
+  // Display limitation (DECISIONS candidate): the span shown below is rounded to
+  // the nearest 1,000 mi (a frozen test pins "0 mi to 1,000 mi"), so live runs under 500 mi render as "0 mi to 0 mi".
   const geometryTo = Math.round(summary.geometryDistanceMiles / 1000) * 1000
   const overall = overallRisk(riskSummary)
 
@@ -94,7 +134,7 @@ function RouteCard({
         <h3 className="text-base font-semibold text-ink">{route.label}</h3>
         {rank !== null ? (
           recommended ? (
-            <span className="badge border-signal bg-signal/10 font-mono text-[11px] font-medium text-signal">
+            <span className="badge border-signal bg-signal/10 font-mono text-[11px] font-medium text-signal-text">
               Rank #{rank}
             </span>
           ) : (
@@ -103,7 +143,17 @@ function RouteCard({
         ) : null}
       </div>
 
-      {reason ? <p className="mt-1 text-[13px] text-ink-2">{reason}</p> : null}
+      {reason ? (
+        <p className="mt-1 text-[13px] text-ink-2" title={reasonFull || undefined}>
+          {reason}
+        </p>
+      ) : null}
+
+      <p className="mt-2">
+        <span className={`badge risk-${overall} text-[11px] font-medium`}>{riskLabel(overall)}</span>
+      </p>
+
+      <p className="mt-2 text-[13px] text-ink">{VERDICT_BY_LEVEL[overall]}</p>
 
       <ul className="mt-3 grid grid-cols-1 gap-3 border-t border-border pt-3 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border">
         <li className="sm:pr-3">
@@ -122,23 +172,18 @@ function RouteCard({
         </li>
       </ul>
 
-      <p className="mt-2">
-        <span className={`badge risk-${overall} text-[11px] font-medium`}>{riskLabel(overall)}</span>
-      </p>
-
-      <p className="mt-3 text-xs text-ink-2">
-        {summary.count} at {summary.effectiveIntervalMiles} mi spacing
-        {summary.capped
-          ? ` — widened from ${summary.requestedIntervalMiles} mi to stay within ${summary.maxPerRoute} per route`
-          : ""}{" "}
-        · sampled along the provider geometry from 0 mi to {numberFmt0.format(geometryTo)} mi
-      </p>
-
       <details className="group mt-3 rounded-control border border-border px-3 py-2">
         <summary className="flex cursor-pointer list-none items-center gap-2 text-[13px] font-medium text-ink-2 marker:content-none">
-          Checkpoint weather
+          Weather stops
           <span className="font-mono text-[11px] text-ink-3">({route.checkpoints.length})</span>
         </summary>
+        <p className="mt-3 text-xs text-ink-2">
+          {summary.count} at {summary.effectiveIntervalMiles} mi spacing
+          {summary.capped
+            ? ` — widened from ${summary.requestedIntervalMiles} mi to stay within ${summary.maxPerRoute} per route`
+            : ""}{" "}
+          · sampled along the provider geometry from 0 mi to {numberFmt0.format(geometryTo)} mi
+        </p>
         <ul className="mt-2 space-y-1.5 font-mono text-[12px] text-ink-2">
           {route.checkpoints.map((checkpoint) => {
             const risk = checkpoint.checkpointRisk
@@ -203,7 +248,8 @@ export function RouteOptions({ response }: { response: RouteGenerationOk }) {
       <ol aria-label="route options" className="mt-3 space-y-3">
         {routes.map((route) => {
           const rankIndex = rankedRouteIds.indexOf(route.routeId)
-          const reason = firstSentence(recommendation.routeExplanations?.[route.routeId])
+          const reason = plainLeadSentence(recommendation.routeExplanations?.[route.routeId])
+          const reasonFull = recommendation.routeExplanations?.[route.routeId] ?? null
           return (
             <li key={route.routeId}>
               <RouteCard
@@ -212,6 +258,7 @@ export function RouteOptions({ response }: { response: RouteGenerationOk }) {
                 recommended={recommendedId === route.routeId}
                 rank={rankIndex >= 0 ? rankIndex + 1 : null}
                 reason={reason}
+                reasonFull={reasonFull}
               />
             </li>
           )
@@ -220,7 +267,7 @@ export function RouteOptions({ response }: { response: RouteGenerationOk }) {
 
       <details className="mt-4 rounded-control border border-border px-3 py-2">
         <summary className="cursor-pointer list-none text-[13px] font-medium text-ink-2">
-          Estimate methods
+          How we estimate
         </summary>
         <p className="mt-2 text-[13px] leading-relaxed text-ink-2">
           Risk values are model estimates for planning, not real-time road conditions. Weather data from Open-Meteo is matched to the exact

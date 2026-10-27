@@ -33,7 +33,7 @@ const LEGEND: Array<{ level: RiskLevel; label: string }> = [
 ]
 
 const ROUTE_LINE_SELECTED = "#2563EB" // CSS accent token (light theme)
-const ROUTE_LINE_UNSELECTED = "#D1D5DB" // muted steel (border-strong token, light theme)
+const ROUTE_LINE_UNSELECTED = "#6B7280" // muted steel, WCAG ≥3:1 on light basemap
 
 /**
  * Style mutations (addSource/addLayer/removeLayer) are unsafe while a fallback
@@ -238,8 +238,8 @@ export function MapViewport({
           el.style.height = isNoTravel ? "14px" : "10px"
           el.style.borderRadius = "50%"
           el.style.backgroundColor = RISK_HEX[level]
-          // border-strong token (#3D4654): matches the border system, no shadow on dark.
-          el.style.border = "2px solid #D1D5DB"
+          // muted steel border: readable against the light basemap fill
+          el.style.border = "2px solid #6B7280"
           el.style.cursor = "pointer"
           el.style.transition = "transform 120ms ease"
           el.addEventListener("mouseenter", () => {

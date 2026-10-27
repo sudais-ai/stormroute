@@ -14,25 +14,26 @@
 @import "tailwindcss";
 
 @theme {
-  /* Surfaces + text — the single dark look, defined correct in :root. */
-  --color-bg: #0B0E14;
-  --color-panel: #141922;
-  --color-raised: #1B212B;
-  --color-border: #262D38;
-  --color-border-strong: #3D4654;
-  --color-text: #E7ECF3;
-  --color-text-2: #9AA6B5;
-  --color-text-3: #5A6472;
-  --color-accent: #5C9DFF;
-  --color-amber-signal: #FFB224;
+  /* Surfaces + text — light theme. */
+  --color-bg: #FAFAF9;
+  --color-panel: #FFFFFF;
+  --color-raised: #F5F5F4;
+  --color-border: #E5E7EB;
+  --color-border-strong: #D1D5DB;
+  --color-text: #1A1A1A;
+  --color-text-2: #4B5563;
+  --color-text-3: #6B7280;
+  --color-accent: #2563EB;
+  --color-amber-signal: #F59E0B;
 
   /* Ergonomic aliases from plan section 3.3 — component agents code against
      text-ink / text-ink-2 / text-ink-3 / bg-signal / ring-accent.
      Values are pinned equal to the tokens above. */
-  --color-ink: #E7ECF3;
-  --color-ink-2: #9AA6B5;
-  --color-ink-3: #5A6472;
-  --color-signal: #FFB224;
+  --color-ink: #1A1A1A;
+  --color-ink-2: #4B5563;
+  --color-ink-3: #6B7280;
+  --color-signal: #F59E0B;
+  --color-signal-text: #92400E;
 
   /* Risk levels — UI semantic names mapped 1:1 to the TEST-PINNED hexes in
      src/lib/heatmap.ts (CORRIDOR_RISK_COLORS). CSS and heatmap must agree;
@@ -43,6 +44,16 @@
   --color-risk-severe: #ef4444;
   --color-risk-no-travel: #dc2626;
   --color-risk-unknown: #64748b;
+
+  /* Badge TEXT variants — WCAG AA (≥4.5:1) against each 13% same-hue tint.
+     Full-hue --color-risk-* values above stay frozen: dots, the heatmap
+     corridor, and the map legend keep speaking the test-pinned hexes. */
+  --color-risk-text-low: #166534;
+  --color-risk-text-moderate: #92400E;
+  --color-risk-text-high: #9A3412;
+  --color-risk-text-severe: #B91C1C;
+  --color-risk-text-no-travel: #991B1B;
+  --color-risk-text-unknown: #475569;
 
   /* Typography — Barlow for UI text, JetBrains Mono for input echo,
      coordinates, weights, via-roads, timestamps, slider label + ticks. */
@@ -63,7 +74,7 @@
    ========================================================================== */
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -98,7 +109,7 @@ h3 {
   color: var(--color-text);
 }
 
-/* Scrollbars */
+/* Scrollbars — light theme */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-border-strong) transparent;
@@ -155,7 +166,7 @@ h3 {
     justify-content: center;
     gap: 0.5rem;
     background: var(--color-accent);
-    color: #0B0E14;
+    color: var(--color-bg);
     font-weight: 600;
     border: 1px solid transparent;
     border-radius: var(--radius-control);
@@ -163,7 +174,7 @@ h3 {
   }
 
   .btn-primary:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--color-accent) 86%, #ffffff);
+    background: color-mix(in srgb, var(--color-accent) 86%, var(--color-text));
   }
 
   .btn-primary:disabled {
@@ -193,9 +204,9 @@ h3 {
     border-color: var(--color-accent);
   }
 
-  /* Risk badges: full-hue text + border over a 13% same-hue fill.
-     Full-hue (not mixed into a fore/background pair) so dots, badges and the
-     map legend all speak the same six pinned hues.
+  /* Risk badges: AA-compliant darker text + border over a 13% same-hue fill.
+     Tint/legend/dots keep the six pinned full hues (heatmap contract); only
+     badge text darkens to meet WCAG AA on its tint.
      `.risk-no_travel` (underscore, the raw API level key riskColors.ts emits)
      is aliased onto the hyphen spelling in every block — either spelling hits. */
   .risk-low,
@@ -218,33 +229,33 @@ h3 {
   }
 
   .risk-low {
-    color: var(--color-risk-low);
+    color: var(--color-risk-text-low);
     background: color-mix(in srgb, var(--color-risk-low) 13%, transparent);
   }
 
   .risk-moderate {
-    color: var(--color-risk-moderate);
+    color: var(--color-risk-text-moderate);
     background: color-mix(in srgb, var(--color-risk-moderate) 13%, transparent);
   }
 
   .risk-high {
-    color: var(--color-risk-high);
+    color: var(--color-risk-text-high);
     background: color-mix(in srgb, var(--color-risk-high) 13%, transparent);
   }
 
   .risk-severe {
-    color: var(--color-risk-severe);
+    color: var(--color-risk-text-severe);
     background: color-mix(in srgb, var(--color-risk-severe) 13%, transparent);
   }
 
   .risk-no-travel,
   .risk-no_travel {
-    color: var(--color-risk-no-travel);
+    color: var(--color-risk-text-no-travel);
     background: color-mix(in srgb, var(--color-risk-no-travel) 13%, transparent);
   }
 
   .risk-unknown {
-    color: var(--color-risk-unknown);
+    color: var(--color-risk-text-unknown);
     background: color-mix(in srgb, var(--color-risk-unknown) 13%, transparent);
   }
 
@@ -382,7 +393,7 @@ h3 {
     transform: translateX(-50%);
     padding: 0.75rem 1rem;
     background: var(--color-accent);
-    color: #0B0E14;
+    color: var(--color-bg);
     font-weight: 600;
     border-radius: var(--radius-control);
     z-index: 9999;
