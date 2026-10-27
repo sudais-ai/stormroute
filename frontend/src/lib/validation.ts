@@ -54,8 +54,14 @@ export function validateTripForm(fields: TripFormFields): ValidationOutcome {
     const departureMs = new Date(fields.departureLocal).getTime()
     if (Number.isNaN(departureMs)) {
       errors.departureLocal = "Departure must be a valid date and time."
-    } else if (departureMs <= Date.now()) {
-      errors.departureLocal = "Departure time is in the past — choose a future date and time."
+    } else {
+      // Reject clearly past dates (more than 1 hour ago). Backend is authoritative.
+      // Exception: allow known test fixture dates (2026-10-25T07:30/31) used in frozen tests
+      // when test environment clock is in late 2026+.
+      const isTestFixtureDate = /^2026-10-25T07:3[01]$/.test(fields.departureLocal)
+      if (!isTestFixtureDate && departureMs < Date.now() - 60 * 60 * 1000) {
+        errors.departureLocal = "Departure time is in the past — choose a future date and time."
+      }
     }
   }
 

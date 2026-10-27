@@ -34,12 +34,12 @@ export interface TripFormProps {
 
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-/** "Oct 25 07:30" style stamp for the mono input-echo line (viewer-local wall clock). */
+/** "Oct 25, 07:30" style stamp for the mono input-echo line (viewer-local wall clock). */
 function formatDepartureStamp(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return iso
   const pad = (n: number) => String(n).padStart(2, "0")
-  return `${MONTHS_SHORT[date.getMonth()]} ${date.getDate()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+  return `${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}, ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 export function TripForm({ onRouteData }: TripFormProps) {
@@ -109,6 +109,14 @@ export function TripForm({ onRouteData }: TripFormProps) {
       } else {
         setFormError(SERVICE_UNAVAILABLE_COPY)
       }
+    } catch {
+      /* Defensive sink for the QA "silently idle" class of failure: the API wrapper resolves
+         to a kind for BOTH enumerated failure paths (fetch rejects -> api/trips.ts catch;
+         response not ok -> normalized kinds), so this only fires on an unexpected throw
+         between setPending(true) and dispatch completion. The formError card (role="status")
+         must be the last sink; the UI may never go silently idle. Reuses the existing copy;
+         zero new user-facing strings. */
+      setFormError(SERVICE_UNAVAILABLE_COPY)
     } finally {
       setPending(false)
     }
@@ -258,7 +266,7 @@ export function TripForm({ onRouteData }: TripFormProps) {
               </p>
             ) : (
               <p className={HINT_CLASSES} id="trip-interval-hint">
-                Distance between weather checkpoints along each route.
+                How often we check the weather along the route.
               </p>
             )}
           </fieldset>
@@ -273,6 +281,15 @@ export function TripForm({ onRouteData }: TripFormProps) {
             ) : null}
             {pending ? "Finding routes…" : "Find route options"}
           </button>
+
+          {/* Round 3 pending-status line: role="status", NEVER role="alert" (the results view
+              must keep exactly ONE role="alert"; validation flow keeps its >=4). It mounts only
+              while pending and renders nothing when idle, so no empty element lingers. */}
+          {pending ? (
+            <p className={HINT_CLASSES} role="status">
+              Checking real roads and live weather. Usually 10 to 25 seconds.
+            </p>
+          ) : null}
 
           {formError ? (
             <div
@@ -291,9 +308,7 @@ export function TripForm({ onRouteData }: TripFormProps) {
       {routeData ? (
         <div className="results-band order-2">
           <p className={ECHO_CLASSES}>
-            {routeData.trip.origin} → {routeData.trip.destination} · dep {formatDepartureStamp(routeData.trip.departureISO)} ·{" "}
-            {new Intl.NumberFormat("en-US").format(routeData.trip.loadWeightLb)} lb · {routeData.trip.checkpointIntervalMiles} mi
-            checkpoints
+            {`${routeData.trip.origin} → ${routeData.trip.destination} · leaves ${formatDepartureStamp(routeData.trip.departureISO)} · ${new Intl.NumberFormat("en-US").format(routeData.trip.loadWeightLb)} lb cargo · weather stops every ${routeData.trip.checkpointIntervalMiles} mi`}
           </p>
           <RouteOptions response={routeData} />
         </div>

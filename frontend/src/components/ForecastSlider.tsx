@@ -72,7 +72,7 @@ export function ForecastSlider({ heatmaps, selectedRouteId, value, onChange, dis
         ))}
       </div>
       <p className="mt-2 text-[11px] text-ink-3">
-        Gridded forecast samples ≈ 11 km apart · corridor-level, not road-level.
+        You choose the forecast hour with this slider.
       </p>
     </section>
   )
