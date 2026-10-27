@@ -1082,3 +1082,74 @@ None needed so far — all gates green on first pass.
 - Prod-settings simulation (shell env, no secret values printed): DEBUG=False; ALLOWED_HOSTS=['stormroute-backend.onrender.com']; CORS merged = 4 localhost entries + 'https://stormroute.netlify.app'. `check --deploy` remaining items: mail.E001 (accepted - app sends no email; console backend is startproject boilerplate), security.W009 (Render resolves via generated DJANGO_SECRET_KEY), security.W020 (hosts absent only in local sim; Render supplies DJANGO_ALLOWED_HOSTS).
 - Production-style local smoke via `vite preview --port 4180` + `API_PROXY_TARGET=http://localhost:8001`: GET `/api/health/` through preview -> 200 ok JSON; GET `/` -> 200 (root div present); POST `/api/trips/routes/` (Chicago->Denver, 34,000 lb, 25 mi, live providers) through preview -> 2 real routes with 42/47 checkpoints (Mapbox attempt did reach the provider); a second stress POST exercised the documented honest path - Open-Meteo `weather_timeout` -> all checkpoints returned `unknown` (`factors "all weather data unavailable"`, `checkpointSummary intact`) - no fabricated data.
 - Servers kept alive after verification: backend 8001 (health OK), vite preview 4180 (background). **NO push (user-gated); origin not configured.**
+
+## 2026-10-27 — LIVE PUBLIC DEPLOY (Vercel frontend + Vercel backend)
+
+### Platform trail (evidence-driven)
+- **Render — ABANDONED (platform-side):** GraphQL createServer returned
+  invalid repository for EVERY sudais-ai/* repo while the control experiment
+  ender-examples/express-hello-world deployed fine with the same GitHub
+  identity; GitHub-API repo verify (id 1436077198, public, master) passed and a
+  GitHub-App access-toggle re-auth still ended in the same reject. No repo-side
+  defect. Test services left for deletion: express-hello-world
+  (srv-dbgele59fdbs7380bneg), optional blueprint stormroute-blueprint
+  (exs-dbge9pu7bikc739rfbi0).
+- **Railway — BLOCKED (plan limit):** repo visible post-GitHub-login, but new
+  service create stops with "Free plan resource provision limit exceeded.
+  Please upgrade to provision more resources!" (Hobby = paid).
+- **Koyeb — ATTEMPTED, console unusable:** GitHub OAuth login + email verify
+  succeeded, org created (stormroute), but the console app.koyeb.com renders
+  only the shell/banner ("Koyeb is joining Mistral") with no service flow;
+  /v1/apps, /v1/services return 401 from the SPA. Skipped — no engine of
+  last resort was available without fighting a broken console.
+- **Vercel — CHOSEN for BOTH frontend and backend** (account
+  
+ilkhan687-4652's projects, Hobby, 	eam_zPJ7iEzrn8l8zUyPCLneIIZA).
+
+### Deploy commissioning (all verified live)
+- GitHub: https://github.com/sudais-ai/stormroute (public, master ==
+  origin == 1d51d3 at the time of writing).
+- Frontend project: stormroute prj_brU8uUBF0VJENgsXmxQYCpbmqoCL, Root
+  Directory rontend, Framework Preset Vite, OVERRIDES committed to git and
+  re-confirmed in Project Settings → Build & Deployment.
+- **Vercel Authentication (deployment protection) was ON by default** and the
+  settings UI toggled back on every reload; the save never fired a network
+  call (inspection: no PATCH/POST to any projects API). Disabled with the REST
+  API instead: PATCH /v9/projects/{id}{teamId} body {"ssoProtection":null}
+  → HTTP 200 → public fetch changed from the "Login – Vercel" page to the real
+  Vite app. Same fix applied to the backend project.
+- Backend project: stormroute-backend prj_XewCpIvZKRC4AOJtPgdk5GQwdk5b,
+  Root Directory ackend, Python serverless runtime with
+  ackend/api/index.py (imports stormroute.asgi.application as pp) and
+  ackend/vercel.json rewrite (/(.*) -> /api/index).
+- Backend env vars (API POST /v10/projects/{id}/env, values not echoed):
+  DJANGO_DEBUG=0, DJANGO_SECURE=1, DJANGO_ALLOWED_HOSTS=.vercel.app,
+  CORS_ALLOWED_ORIGINS = both Vercel frontend domains (comma list),
+  DJANGO_SECRET_KEY (encrypted), MAPBOX_ACCESS_TOKEN (encrypted).
+- Deployment proven: backend deploy dpl_HrGt9VMiVC64pWFykLeQqJf7urCA /
+  dpl_6Mh9ZCZTWW7Zrg7fZ2JhuJXupNPV → **READY**; alias
+  stormroute-backend.vercel.app/api/health → 200 JSON.
+- Redeploys propagate via master pushes (auto git integration).
+
+### Live end-to-end verification (real browser, Playwright MCP)
+- Target: https://stormroute-two.vercel.app (project production domain;
+  note: stormroute.vercel.app is owned by an UNRELATED app — do not use).
+- Badge: "Backend API · /api/health/ answered: JSON 0.1.0 → **Online**".
+- Trip run: Origin Memphis, TN, Destination Denver, CO, Departure
+  2026-10-28T10:00, Load 34000 lb, 25 mi spacing (default).
+- Network: GET /api/health/ → 200, POST /api/trips/routes/ → 200 through
+  the same-origin proxy (cross-project rewrite to
+  stormroute-backend.vercel.app).
+- Results: Mapbox honest alert "returned 2 distinct routes (three were
+  requested)" — Route 1 rank #1 Low (0.00) 1,095.2 mi 15h56m via I 40/I 70,
+  45 weather stops; Route 2 rank #2 Low (0.00) 1,048.4 mi — weather-stop
+  accordion expands with per-stop forecasts (wind/rain/snow per stop).
+- Console: **0 errors, 0 warnings**; failed network requests: **none**.
+- Screenshots: docs/verification/deploy-live/route-options-memphis-denver.png,
+  docs/verification/deploy-live/weather-stops-open-small.png.
+
+### Secret handling
+- Vercel tokens used for API commissioning live in session memory only; the
+  generated long-lived deploy token is revodable at
+  ercel.com/account/settings/tokens (24h expiry set during creation).
+- All project secrets set via encrypted env vars; nothing echoed to docs.

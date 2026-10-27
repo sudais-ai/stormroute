@@ -82,49 +82,58 @@ npm run preview -- --port 4179
 
 (Use any free port; `vite.config.ts` routes `/api` through `preview.proxy`.)
 
-## Deploy (Render backend + Netlify frontend)
+## Deploy (live: Vercel frontend + Vercel backend)
 
-Config files live at repo root: `render.yaml` (backend blueprint) and `netlify.toml`
-(frontend build + `/api/*` proxy). No secrets are committed anywhere — you supply
-account-specific values in each platform's dashboard.
+**This repo is deployed live** (2026-10-27):
 
-**1) Backend on Render** — New Blueprint → pick this repo → `render.yaml` is read
-automatically (service `stormroute-backend`, `backend/` root, migrate on build,
-gunicorn start with `--timeout 180`). On first sync, fill these env vars (no real
-values needed in the repo):
+- Frontend: **https://stormroute-two.vercel.app** (Vercel project `stormroute`,
+  Root Directory `frontend`, framework Vite; `/api/*` rewrites to the backend).
+- Backend: **https://stormroute-backend.vercel.app** (Vercel project
+  `stormroute-backend`, Root Directory `backend`, Python serverless via
+  `backend/api/index.py`; `backend/vercel.json` routes everything to it).
+  - `GET /api/health/` and `POST /api/trips/routes/` are served by Django 6.1 on
+    the Vercel Python runtime; the backend is stateless (no app models), so the
+    serverless filesystem is not a constraint.
+- Same-origin `/api` proxy keeps CORS simple; `CORS_ALLOWED_ORIGINS` still
+  whitelists both Vercel domains for direct calls.
+- Note: `stormroute.vercel.app` belongs to an unrelated app (domain name
+  squatted) — use `stormroute-two.vercel.app`.
+
+**Re-deploying the same stack from scratch** (any Vercel account):
+
+1. Import the repo twice.
+   - Project A (frontend): Root Directory = `frontend`, framework Vite.
+   - Project B (backend): Root Directory = `backend`, framework Other;
+     Vercel's Python runtime picks up the `api/` entry automatically.
+2. Expand `frontend/vercel.json` with Project B's real domain in the
+   `https://RENDER-BACKEND-URL.onrender.com` placeholder (kept for the
+   alternative Render path below).
+3. Backend env vars (Vercel dashboard → Settings → Environment Variables):
 
 | Env var | Set it to |
 |---|---|
-| `DJANGO_ALLOWED_HOSTS` | your Render service domain, e.g. `stormroute-backend.onrender.com` |
-| `CORS_ALLOWED_ORIGINS` | your Netlify site URL, e.g. `https://stormroute.netlify.app` |
-| `MAPBOX_ACCESS_TOKEN` | your Mapbox token (server-side only; never bundled into the frontend) |
+| `DJANGO_DEBUG` | `0` |
+| `DJANGO_SECURE` | `1` |
+| `DJANGO_ALLOWED_HOSTS` | `.vercel.app` (or the exact backend domain) |
+| `CORS_ALLOWED_ORIGINS` | both frontend domains, comma-separated |
+| `DJANGO_SECRET_KEY` | any long random value |
+| `MAPBOX_ACCESS_TOKEN` | your Mapbox token (server-side only) |
 
-`DJANGO_DEBUG` is pinned to `0` in the blueprint. The free plan sleeps after
-~15 min idle — the first request after a nap takes ~50 s to cold-start.
+**Render + Netlify alternative:** config files live at repo root (`render.yaml`,
+`netlify.toml` — now pointing at the live backend host). Render blueprint flow,
+env table and honest free-tier notes as previously documented; `netlify.toml`
+currently proxies `/api/*` to the already-live Vercel backend.
 
 Two `check --deploy` residuals are accepted on purpose: `mail.E001` (the app
 sends no email — the console mail backend is startproject boilerplate and
-harmless to logs) and the `W004/W009-style` secret warnings your Render env
-closes automatically via `DJANGO_SECRET_KEY` (`generateValue: true`).
-
-**2) Frontend on Netlify** — New site from Git → build base `frontend`,
-command `npm run build`, publish `dist` (already in `netlify.toml`). Then open
-`netlify.toml` and replace `RENDER-BACKEND-URL.onrender.com` in the `/api/*`
-redirect with your real Render domain, and redeploy.
-
-**Frontend alternative: Vercel** — `frontend/vercel.json` has the same setup as
-rewrites (`/api/*` → Render, SPA fallback). In the Vercel dashboard set the
-project **Root Directory = `frontend`** (build/output auto-detect), then expand
-the `RENDER-BACKEND-URL` placeholder in `frontend/vercel.json` with the real
-Render domain and let the auto-redeploy land.
+harmless to logs) and the `W004/W009-style` secret warnings a provider env
+closes automatically via `DJANGO_SECRET_KEY`.
 
 **Behavior notes (honest):** the frontend already calls relative `/api/*`
-endpoints, so no code change is needed — only the proxy rule. Netlify's proxy
-layer may cut very long responses (route generation takes 60–120 s live); the
-180 s gunicorn timeout on Render is the source of truth, but if a first request
-times out at Netlify, retry once on a warm instance. The sqlite database only
-holds Django system tables (no app models), so the free-tier ephemeral disk is
-harmless here.
+endpoints, so no code change is needed — only the proxy rule. Serverless cold
+starts add latency to the first request after idle; Vercel's Hobby plan serves
+the next request warm. The sqlite database only holds Django system tables (no
+app models), so ephemeral disks are harmless here.
 
 ## Assessment Evidence
 

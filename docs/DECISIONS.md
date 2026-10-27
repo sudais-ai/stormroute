@@ -406,3 +406,35 @@ Light theme flip via token-first design — index.css @theme already light; 9 ha
 9. **`gunicorn` pinned (23.0.0) with `--timeout 180`** because live route generation takes 60-120 s; Render build = pip install + `migrate --noinput` (plain system checks only - no app models; ephemeral sqlite stays harmless). Honest limits documented in README: Netlify proxy may cut very long responses; Render free tier sleeps ~15 min (cold start ~50 s). `check --deploy` residuals accepted: mail.E001 (no email feature; console backend is startproject boilerplate - plain check clean), W009 (Render `DJANGO_SECRET_KEY generateValue: true`), W020 (hosts supplied via env on Render).
 10. **Client-repo shrink continued (interim docs):** `git rm` `docs/PHASE_PLAN.md` + `docs/API_PROVIDER_RESEARCH.md`; `docs/demo/` trimmed to the single final deliverable `stormroute-walkthrough-DETAIL-12min-FINAL.mp4` (11:55, faststart-proper duration metadata) + `docs/demo/VOICE_NARRATION_SCRIPT.md` (timestamps +-5-10 s per ring/screen). STATUS/PHASE-style interim tracking docs stay OUT of the delivery repo (Round-8 policy).
 11. **Nothing published:** git push, Render/Netlify account ops, and real env values remain USER-GATED (render.yaml placeholders `sync: false`; netlify.toml keeps the `RENDER-BACKEND-URL` placeholder until the backend exists).
+
+## 2026-10-27 — Hosting decision: Vercel for BOTH frontend and backend
+
+**Decision:** StormRoute is now live with the frontend on Vercel
+(stormroute-two.vercel.app, project root rontend) and the Django backend
+on the Vercel Python serverless runtime (stormroute-backend.vercel.app,
+project root ackend, entry ackend/api/index.py -> ASGI application).
+
+**Why not the previously planned Render + Netlify split:**
+- Render's GitHub integration rejected every sudais-ai/* repository at
+  createServer (invalid repository) even though a control repo deployed
+  fine — platform-side defect, no repo fix possible.
+- Railway and Koyeb were attempted for the backend: Railway blocked the new
+  project behind a paid upgrade ("resource provision limit exceeded"), Koyeb's
+  console is mid-Mistral-migration and never rendered the service flow.
+
+**Why serverless is safe here:** the backend has NO project models —
+core/models.py is the startproject stub, the SQLite database holds only
+Django system tables, and every endpoint is pure computation over Mapbox /
+Open-Meteo HTTP responses. All state lives in-process per request, so the
+ephemeral serverless filesystem matches the app's behavior on any host.
+
+**Same-origin proxy kept:** the frontend keeps calling relative /api/* and
+Vercel rewrites those to the backend domain (rontend/vercel.json), so no
+code change was needed when the host changed. CORS stays as a *fallback*
+whitelist with both Vercel domains.
+
+**Consequence:** Vercel deployment protection (Vercel Authentication) defaults
+to ON for every new project; the settings UI could not persist the OFF state
+(no network request on save). Disabled via REST PATCH /v9/projects/{id}
+{"ssoProtection":null} for both projects — documented in TEST_LOG so future
+re-deploys use the API path instead of the UI.
