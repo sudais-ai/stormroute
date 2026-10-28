@@ -1178,3 +1178,16 @@ profile via Playwright MCP. No project code touched except the OG fix below.
 
 - Status: card content LIVE and correct; hero thumbnail becomes visible once
   LinkedIn finishes CDN image sync (LinkedIn-side, no further action possible).
+
+### Update (same day, later): thumbnail RESOLVED
+
+- Root cause of repeated placeholder: LinkedIn crawler had cached the URL's
+  link data from the FIRST add (pre-OG-tags), so re-adds reused "no image".
+- Resolution: visiting LinkedIn Post Inspector triggered a fresh crawl;
+  a new LinkedIn CDN image id (D4D27AQGHRlwN4qxkUA, 800x418, our 1200x628
+  hero ratioga) appeared for the card; featured/details page now renders the
+  designed hero thumbnail on the StormRoute Link card.
+- Final visual evidence: docs/verification/linkedin/featured-hero-thumb-live.png
+  (card shows Link + hero thumbnail + title + description, TradeReady-pattern).
+- licdn-articleshare.png stored as the Applied AI Engineer card's preview
+  (was temporarily mistaken for ours during debugging).
