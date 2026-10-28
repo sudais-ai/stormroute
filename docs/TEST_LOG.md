@@ -1191,3 +1191,23 @@ profile via Playwright MCP. No project code touched except the OG fix below.
   (card shows Link + hero thumbnail + title + description, TradeReady-pattern).
 - licdn-articleshare.png stored as the Applied AI Engineer card's preview
   (was temporarily mistaken for ours during debugging).
+
+### Update (video post): designed thumbnail LIVE
+
+- User's demo video (271 MB) compressed to 78.7 MB (libx264 CRF22/maxrate5M)
+  because LinkedIn desktop video upload limit is 200 MB - ffmpeg portable was
+  used (temp, not installed system-wide).
+- Video composer flow: Video button -> file upload -> Editor (video rs4,
+  dur 283s) -> Thumbnail button -> "Video thumbnail" panel -> uploaded
+  frontend/public/og-image.png copy -> Add -> Next -> caption via
+  ProseMirror execCommand -> Post.
+- Contains: humanized English caption (1338 chars), bullets, live app URL,
+  Loom walkthrough URL, 14 hashtags; NO GitHub link by user rule.
+- Auto-captions failed to transcribe (LinkedIn banner) -> reviewed and
+  REMOVED captions, saved ("Changes saved").
+- Double-post cleanup: interrupted first attempt created a duplicate;
+  older duplicate deleted via Open control menu -> Delete post -> Delete.
+  Final = exactly ONE video post.
+- Visual proof: docs/verification/linkedin/video-post-final.png,
+  video-post-with-thumb.png, thumb-visual.png, poster-real.png (Cloudflare
+  direct nav blocked - poster verified in-page instead).
