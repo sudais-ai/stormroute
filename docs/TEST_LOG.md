@@ -1238,3 +1238,24 @@ profile via Playwright MCP. No project code touched except the OG fix below.
   project-entry-final.png, form-full.png (form state).
 - Note: Playwright MCP server restarted mid-verification; re-navigated and
   re-verified - entry intact.
+
+### Projects media completion: PDF case study + contributors decision (2026-10-28)
+
+- User asked what was missing in Projects media; PDF was absent. Built
+  stormroute-case-study.html (5 A4 pages, SVG diagrams): cover, system
+  architecture, risk-engine flowchart (9 steps + storm-cell decision),
+  charts (route-comparison bars, per-mile risk profile, weighted risk-factor
+  donut - labeled illustrative sample), stack/testing/deployment tables.
+- Rendered to PDF via headless Edge print-to-pdf (valid PDF-1.4, 5 pages,
+  127.4 KB) - NOT installed system-wide, Edge binary used directly.
+- Uploaded via Add media -> Add a document -> Title "StormRoute - Architecture
+  & Risk-Engine Case Study (PDF)" + description -> Save.
+- Edit-form incident: a mis-targeted keyboard test typed into Project name
+  (value "aahmed"); restored to exact "StormRoute — Weather-Aware Truck
+  Routing" (40/255) in the same session before saving.
+- Contributors: typeahead lists real connections (would notify them on tag);
+  user chose SKIP - section left empty (solo project). Recorded as decision.
+- Final media set verified in project overlay carousel (4 items):
+  1. Designed hero image (Dashboard) 2. Live App link 3. Loom walkthrough link
+  (auto-fetched title "Truck Weather Alerts with Trip Routing") 4. PDF case
+  study. Evidence: media-pdf-item.png, overlay-media.png, contrib-typed.png.

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>StormRoute — Architecture &amp; Risk-Engine Case Study</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: "Segoe UI", Arial, Helvetica, sans-serif; color: #0B1F3A; }
+  .page { width: 210mm; height: 296mm; page-break-after: always; position: relative; overflow: hidden; background: #ffffff; }
+  .page:last-child { page-break-after: auto; }
+  .pad { padding: 14mm 16mm; }
+  h1 { font-size: 34pt; letter-spacing: 1px; }
+  h2 { font-size: 20pt; }
+  h3 { font-size: 12.5pt; }
+  .muted { color: #64748B; }
+  .cyan { color: #38BDF8; }
+  .amber { color: #F59E0B; }
+  .small { font-size: 9pt; }
+  .tagline { font-size: 14pt; color: #BAE6FD; }
+  .badge { display: inline-block; border: 1px solid #38BDF8; color: #7DD3FC; border-radius: 999px; padding: 3px 12px; font-size: 9pt; margin: 3px 4px 0 0; }
+  .footer { position: absolute; bottom: 8mm; left: 16mm; right: 16mm; display: flex; justify-content: space-between; font-size: 8.5pt; }
+  .headerband { background: #0B1F3A; color: #fff; padding: 9mm 16mm 7mm; }
+  .headerband h2 { color: #fff; }
+  .headerband .sub { color: #93C5FD; font-size: 10pt; margin-top: 2mm; }
+  .card { border: 1px solid #E2E8F0; border-radius: 10px; padding: 5mm 6mm; background: #F8FAFC; }
+  table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  th { background: #0B1F3A; color: #fff; text-align: left; padding: 6px 10px; font-size: 9.5pt; }
+  td { border-bottom: 1px solid #E2E8F0; padding: 6px 10px; vertical-align: top; }
+  .legend span { display: inline-block; margin-right: 14px; font-size: 9pt; }
+  .k { width: 10px; height: 10px; display: inline-block; border-radius: 2px; margin-right: 5px; }
+  .note { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 3mm 4mm; font-size: 9pt; color: #7C4A03; }
+  .linkline { font-size: 10pt; margin-top: 2mm; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 — COVER ============ -->
+<div class="page" style="background:#0B1F3A; color:#fff;">
+  <div class="pad" style="height:100%; display:flex; flex-direction:column;">
+    <div style="margin-top:16mm;">
+      <!-- storm mark -->
+      <svg width="120" height="86" viewBox="0 0 120 86">
+        <path d="M30 52 a18 18 0 1 1 6 -35 a24 24 0 0 1 45 6 a15 15 0 0 1 -3 29 z" fill="#1E3A5F" stroke="#38BDF8" stroke-width="2"/>
+        <path d="M62 44 L44 66 L58 66 L50 84 L74 58 L60 58 Z" fill="#F59E0B" stroke="#FBBF24" stroke-width="1"/>
+      </svg>
+      <div style="margin-top:10mm;">
+        <h1>STORM<span class="cyan">ROUTE</span></h1>
+        <div class="tagline" style="margin-top:3mm;">Weather-Aware Truck Routing — Architecture &amp; Risk-Engine Case Study</div>
+      </div>
+      <div style="margin-top:14mm;">
+        <span class="badge">Python</span><span class="badge">Django</span><span class="badge">Django REST Framework</span><span class="badge">React 18</span><span class="badge">TypeScript</span><span class="badge">Vite</span><span class="badge">Tailwind CSS</span><span class="badge">Mapbox GL</span><span class="badge">Vercel</span>
+      </div>
+      <div style="margin-top:16mm; border-left:3px solid #38BDF8; padding-left:6mm; color:#E2E8F0; font-size:11.5pt; line-height:1.6; max-width:150mm;">
+        Enter an origin, destination and departure time — StormRoute samples
+        <b>45+ weather checkpoints</b> along every candidate route and ranks each
+        route with a transparent <b>0–100 per-mile risk score</b>, so the safest
+        driving option is visible before the wheels move.
+      </div>
+    </div>
+    <div style="margin-top:auto;">
+      <div class="small" style="color:#93C5FD;">PROJECT CASE STUDY · MUHAMMAD SUDAIS · APPLIED AI ENGINEER · OCTOBER 2026</div>
+      <div class="linkline" style="color:#E2E8F0;">
+        <span class="cyan">Live app:</span> https://stormroute-two.vercel.app &nbsp;&nbsp;·&nbsp;&nbsp;
+        <span class="cyan">Video walkthrough:</span> https://www.loom.com/share/c0efe1dd8b684aa1b9fb477ed800a7b6
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAGE 2 — SYSTEM ARCHITECTURE ============ -->
+<div class="page">
+  <div class="headerband">
+    <h2>1 · System Architecture</h2>
+    <div class="sub">Deployed topology — public frontend, JSON API backend, third-party data providers</div>
+  </div>
+  <div class="pad">
+    <svg width="730" height="770" viewBox="0 0 730 770">
+      <defs>
+        <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#334155"/>
+        </marker>
+        <marker id="arrc" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#0284C7"/>
+        </marker>
+      </defs>
+
+      <!-- Frontend layer -->
+      <rect x="150" y="18" width="430" height="112" rx="12" fill="#0B1F3A"/>
+      <text x="365" y="44" fill="#7DD3FC" font-size="13" text-anchor="middle" font-weight="bold">FRONTEND — React 18 + TypeScript (Vercel)</text>
+      <rect x="170" y="60" width="120" height="30" rx="6" fill="#1E3A5F" stroke="#38BDF8"/>
+      <text x="230" y="79" fill="#E2E8F0" font-size="10" text-anchor="middle">Vite + Tailwind UI</text>
+      <rect x="305" y="60" width="120" height="30" rx="6" fill="#1E3A5F" stroke="#38BDF8"/>
+      <text x="365" y="79" fill="#E2E8F0" font-size="10" text-anchor="middle">Mapbox GL JS map</text>
+      <rect x="440" y="60" width="120" height="30" rx="6" fill="#1E3A5F" stroke="#38BDF8"/>
+      <text x="500" y="79" fill="#E2E8F0" font-size="10" text-anchor="middle">Route compare view</text>
+      <text x="365" y="113" fill="#93C5FD" font-size="9" text-anchor="middle">origin / destination / departure-time inputs · per-mile risk breakdowns</text>
+
+      <!-- arrow down -->
+      <line x1="365" y1="130" x2="365" y2="188" stroke="#334155" stroke-width="2.5" marker-end="url(#arr)"/>
+      <text x="378" y="166" fill="#0284C7" font-size="9.5" font-weight="bold">JSON over HTTPS (fetch)</text>
+
+      <!-- Backend layer -->
+      <rect x="110" y="192" width="510" height="170" rx="12" fill="#FFFFFF" stroke="#0B1F3A" stroke-width="2.5"/>
+      <text x="365" y="218" fill="#0B1F3A" font-size="13" text-anchor="middle" font-weight="bold">BACKEND — Django + Django REST Framework (API server)</text>
+      <rect x="130" y="234" width="140" height="46" rx="6" fill="#F1F5F9" stroke="#64748B"/>
+      <text x="200" y="253" font-size="10" text-anchor="middle" fill="#0B1F3A" font-weight="bold">REST endpoints</text>
+      <text x="200" y="269" font-size="8.5" text-anchor="middle" fill="#475569">request validation · CORS</text>
+      <rect x="295" y="234" width="140" height="46" rx="6" fill="#EFF6FF" stroke="#2563EB"/>
+      <text x="365" y="253" font-size="10" text-anchor="middle" fill="#0B1F3A" font-weight="bold">Risk engine core</text>
+      <text x="365" y="269" font-size="8.5" text-anchor="middle" fill="#475569">checkpoint sampler · scorer</text>
+      <rect x="460" y="234" width="140" height="46" rx="6" fill="#F1F5F9" stroke="#64748B"/>
+      <text x="530" y="253" font-size="10" text-anchor="middle" fill="#0B1F3A" font-weight="bold">Provider clients</text>
+      <text x="530" y="269" font-size="8.5" text-anchor="middle" fill="#475569">geocode · route · weather</text>
+      <rect x="130" y="296" width="470" height="46" rx="6" fill="#F0FDF4" stroke="#16A34A"/>
+      <text x="365" y="315" font-size="10" text-anchor="middle" fill="#14532D" font-weight="bold">Deterministic test suite</text>
+      <text x="365" y="331" font-size="8.5" text-anchor="middle" fill="#166534">checkpoint sampling · route scoring · provider integration (fixtures, not live calls)</text>
+
+      <!-- provider arrows -->
+      <line x1="530" y1="234" x2="530" y2="404" stroke="#0284C7" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrc)"/>
+      <line x1="365" y1="362" x2="365" y2="404" stroke="#334155" stroke-width="2.5" marker-end="url(#arr)"/>
+
+      <!-- Providers layer -->
+      <rect x="90" y="408" width="550" height="106" rx="12" fill="#F8FAFC" stroke="#94A3B8" stroke-dasharray="7 5"/>
+      <text x="365" y="432" fill="#334155" font-size="12" text-anchor="middle" font-weight="bold">THIRD-PARTY PROVIDERS (keyed, rate-limited, server-side only)</text>
+      <rect x="112" y="448" width="160" height="48" rx="6" fill="#FFFFFF" stroke="#64748B"/>
+      <text x="192" y="468" font-size="10" text-anchor="middle" fill="#0B1F3A" font-weight="bold">Geocoding API</text>
+      <text x="192" y="484" font-size="8.5" text-anchor="middle" fill="#475569">place → coordinates</text>
+      <rect x="285" y="448" width="160" height="48" rx="6" fill="#FFFFFF" stroke="#64748B"/>
+      <text x="365" y="468" font-size="10" text-anchor="middle" fill="#0B1F3A" font-weight="bold">Routing API</text>
+      <text x="365" y="484" font-size="8.5" text-anchor="middle" fill="#475569">candidate route geometry</text>
+      <rect x="458" y="448" width="160" height="48" rx="6" fill="#FFFFFF" stroke="#64748B"/>
+      <text x="538" y="468" font-size="10" text-anchor="middle" fill="#0B1F3A" font-weight="bold">Weather API</text>
+      <text x="538" y="484" font-size="8.5" text-anchor="middle" fill="#475569">current + forecast by hour</text>
+
+      <!-- deployment strip -->
+      <line x1="365" y1="514" x2="365" y2="556" stroke="#334155" stroke-width="2.5" marker-end="url(#arr)"/>
+      <rect x="90" y="560" width="550" height="66" rx="12" fill="#0B1F3A"/>
+      <text x="365" y="586" fill="#7DD3FC" font-size="12" text-anchor="middle" font-weight="bold">DEPLOYED — https://stormroute-two.vercel.app</text>
+      <text x="365" y="608" fill="#E2E8F0" font-size="9.5" text-anchor="middle">frontend on Vercel edge · backend API on Vercel serverless · secrets in environment variables (never committed)</text>
+
+      <!-- API contract note -->
+      <rect x="90" y="648" width="550" height="66" rx="10" fill="#EFF6FF" stroke="#2563EB"/>
+      <text x="365" y="672" fill="#1E40AF" font-size="10.5" text-anchor="middle" font-weight="bold">API CONTRACT (JSON)</text>
+      <text x="365" y="692" fill="#1E3A8A" font-size="9" text-anchor="middle">POST route request { origin, destination, departureTime } → [ { routeGeometry, distanceMi, durationH, riskScore 0–100, checkpoints[45+] } ]</text>
+      <text x="365" y="706" fill="#1E3A8A" font-size="9" text-anchor="middle">every checkpoint: position, ETA, sampled weather, per-factor risk, weighted contribution</text>
+    </svg>
+  </div>
+  <div class="footer muted"><span>StormRoute · Case Study</span><span>Page 2 of 5</span></div>
+</div>
+
+<!-- ============ PAGE 3 — RISK-ENGINE FLOWCHART ============ -->
+<div class="page">
+  <div class="headerband">
+    <h2>2 · Risk-Engine Flow</h2>
+    <div class="sub">From trip input to ranked, weather-scored routes</div>
+  </div>
+  <div class="pad">
+    <svg width="730" height="770" viewBox="0 0 730 770">
+      <defs>
+        <marker id="a2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L8,3 L0,6 Z" fill="#334155"/>
+        </marker>
+      </defs>
+      <!-- steps -->
+      <g font-size="10.5" fill="#0B1F3A">
+        <rect x="215" y="10" width="300" height="44" rx="8" fill="#0B1F3A"/>
+        <text x="365" y="30" fill="#fff" text-anchor="middle" font-weight="bold">1 · Trip input</text>
+        <text x="365" y="45" fill="#93C5FD" text-anchor="middle" font-size="8.5">origin · destination · departure time</text>
+
+        <line x1="365" y1="54" x2="365" y2="74" stroke="#334155" stroke-width="2.2" marker-end="url(#a2)"/>
+        <rect x="215" y="78" width="300" height="40" rx="8" fill="#F1F5F9" stroke="#64748B"/>
+        <text x="365" y="102" text-anchor="middle" font-weight="bold">2 · Geocode both endpoints</text>
+
+        <line x1="365" y1="118" x2="365" y2="138" stroke="#334155" stroke-width="2.2" marker-end="url(#a2)"/>
+        <rect x="215" y="142" width="300" height="40" rx="8" fill="#F1F5F9" stroke="#64748B"/>
+        <text x="365" y="166" text-anchor="middle" font-weight="bold">3 · Fetch candidate routes</text>
+
+        <line x1="365" y1="182" x2="365" y2="202" stroke="#334155" stroke-width="2.2" marker-end="url(#a2)"/>
+        <rect x="215" y="206" width="300" height="48" rx="8" fill="#EFF6FF" stroke="#2563EB"/>
+        <text x="365" y="226" text-anchor="middle" font-weight="bold" fill="#1E40AF">4 · Sample 45+ checkpoints / route</text>
+        <text x="365" y="243" text-anchor="middle" font-size="8.5" fill="#475569">evenly spaced along polyline, each with ETA</text>
+
+        <line x1="365" y1="254" x2="365" y2="274" stroke="#334155" stroke-width="2.2" marker-end="url(#a2)"/>
+        <rect x="215" y="278" width="300" height="44" rx="8" fill="#F1F5F9" stroke="#64748B"/>
+        <text x="365" y="298" text-anchor="middle" font-weight="bold">5 · Weather lookup per checkpoint</text>
+        <text x="365" y="313" text-anchor="middle" font-size="8.5" fill="#475569">forecast at the hour the truck actually arrives</text>
+
+        <line x1="365" y1="322" x2="365" y2="342" stroke="#334155" stroke-width="2.2" marker-end="url(#a2)"/>
+        <!-- decision diamond -->
+        <polygon points="365,346 505,392 365,438 225,392" fill="#FFFBEB" stroke="#D97706"/>
+        <text x="365" y="386" text-anchor="middle" font-weight="bold" fill="#92400E">6 · Storm cell on segment?</text>
+        <text x="365" y="402" text-anchor="middle" font-size="8.5" fill="#B45309">heavy precip / high wind / low visibility</text>
+
+        <line x1="505" y1="392" x2="565" y2="392" stroke="#B45309" stroke-width="2.2"/>
+        <text x="536" y="382" text-anchor="middle" font-size="8.5" fill="#B45309" font-weight="bold">YES</text>
+        <rect x="568" y="370" width="150" height="44" rx="8" fill="#FEF2F2" stroke="#DC2626"/>
+        <text x="643" y="388" text-anchor="middle" font-size="9.5" fill="#7F1D1D" font-weight="bold">Flag checkpoint</text>
+        <text x="643" y="403" text-anchor="middle" font-size="8.5" fill="#991B1B">weight × penalty factor</text>
+        <path d="M643 414 L643 460 L505 392" fill="none" stroke="#B45309" stroke-width="2" stroke-dasharray="4 3"/>
+        <line x1="225" y1="392" x2="165" y2="392" stroke="#16A34A" stroke-width="2.2"/>
+        <text x="195" y="382" text-anchor="middle" font-size="8.5" fill="#166534" font-weight="bold">NO</text>
+        <path d="M165 392 L165 470 L215 470" fill="none" stroke="#16A34A" stroke-width="2" marker-end="url(#a2)"/>
+
+        <rect x="215" y="450" width="300" height="44" rx="8" fill="#F1F5F9" stroke="#64748B"/>
+        <text x="365" y="470" text-anchor="middle" font-weight="bold">7 · Per-mile aggregation</text>
+        <text x="365" y="485" text-anchor="middle" font-size="8.5" fill="#475569">weighted factor blend over segment distance</text>
+
+        <line x1="365" y1="494" x2="365" y2="514" stroke="#334155" stroke-width="2.2" marker-end="url(#a2)"/>
+        <rect x="215" y="518" width="300" height="44" rx="8" fill="#EFF6FF" stroke="#2563EB"/>
+        <text x="365" y="538" text-anchor="middle" font-weight="bold" fill="#1E40AF">8 · Route risk score 0–100</text>
+        <text x="365" y="553" text-anchor="middle" font-size="8.5" fill="#475569">transparent, explainable per-mile number</text>
+
+        <line x1="365" y1="562" x2="365" y2="582" stroke="#334155" stroke-width="2.2" marker-end="url(#a2)"/>
+        <rect x="215" y="586" width="300" height="44" rx="8" fill="#0B1F3A"/>
+        <text x="365" y="606" fill="#fff" text-anchor="middle" font-weight="bold">9 · Rank routes · render comparison</text>
+        <text x="365" y="621" fill="#93C5FD" text-anchor="middle" font-size="8.5">Mapbox GL map · side-by-side risk breakdown</text>
+      </g>
+      <rect x="90" y="654" width="550" height="52" rx="10" fill="#F0FDF4" stroke="#16A34A"/>
+      <text x="365" y="676" text-anchor="middle" font-size="9.5" fill="#14532D" font-weight="bold">Design rule: no black boxes</text>
+      <text x="365" y="693" text-anchor="middle" font-size="8.5" fill="#166534">every score can be decomposed into per-checkpoint, per-factor contributions in the UI</text>
+    </svg>
+  </div>
+  <div class="footer muted"><span>StormRoute · Case Study</span><span>Page 3 of 5</span></div>
+</div>
+
+<!-- ============ PAGE 4 — CHARTS ============ -->
+<div class="page">
+  <div class="headerband">
+    <h2>3 · Risk Model Outputs</h2>
+    <div class="sub">Example engine output for a 3-route plan — illustrative sample, not a live forecast</div>
+  </div>
+  <div class="pad">
+    <div class="legend" style="margin-bottom:4mm;">
+      <span><span class="k" style="background:#38BDF8;"></span>Route A (recommended)</span>
+      <span><span class="k" style="background:#F59E0B;"></span>Route B</span>
+      <span><span class="k" style="background:#EF4444;"></span>Route C</span>
+    </div>
+
+    <!-- Bar chart: route comparison -->
+    <div class="card" style="margin-bottom:5mm;">
+      <h3 style="margin-bottom:2mm;">A · Route comparison — overall risk score (0–100, lower is safer)</h3>
+      <svg width="690" height="190" viewBox="0 0 690 190">
+        <line x1="60" y1="20" x2="60" y2="150" stroke="#CBD5E1" stroke-width="1.5"/>
+        <line x1="60" y1="150" x2="660" y2="150" stroke="#CBD5E1" stroke-width="1.5"/>
+        <g font-size="9" fill="#64748B">
+          <text x="52" y="154" text-anchor="end">0</text>
+          <text x="52" y="109" text-anchor="end">50</text>
+          <text x="52" y="64" text-anchor="end">100</text>
+        </g>
+        <line x1="60" y1="64" x2="660" y2="64" stroke="#E2E8F0" stroke-dasharray="4 4"/>
+        <line x1="60" y1="109" x2="660" y2="109" stroke="#E2E8F0" stroke-dasharray="4 4"/>
+        <rect x="120" y="102.4" width="90" height="47.6" fill="#38BDF8"/>
+        <rect x="330" y="90.1" width="90" height="59.9" fill="#F59E0B"/>
+        <rect x="540" y="76.6" width="90" height="73.4" fill="#EF4444"/>
+        <g font-size="11" font-weight="bold" fill="#0B1F3A">
+          <text x="165" y="96" text-anchor="middle">38</text>
+          <text x="375" y="84" text-anchor="middle">57</text>
+          <text x="585" y="70" text-anchor="middle">72</text>
+        </g>
+        <g font-size="10" fill="#334155">
+          <text x="165" y="168" text-anchor="middle">Route A · 412 mi · 6h 40m</text>
+          <text x="375" y="168" text-anchor="middle">Route B · 388 mi · 6h 55m</text>
+          <text x="585" y="168" text-anchor="middle">Route C · 401 mi · 7h 05m</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Line chart: per-mile profile -->
+    <div class="card" style="margin-bottom:5mm;">
+      <h3 style="margin-bottom:2mm;">B · Per-mile risk profile along the corridor (checkpoint samples)</h3>
+      <svg width="690" height="210" viewBox="0 0 690 210">
+        <line x1="55" y1="15" x2="55" y2="165" stroke="#CBD5E1" stroke-width="1.5"/>
+        <line x1="55" y1="165" x2="665" y2="165" stroke="#CBD5E1" stroke-width="1.5"/>
+        <g font-size="9" fill="#64748B">
+          <text x="48" y="169" text-anchor="end">0</text>
+          <text x="48" y="119" text-anchor="end">50</text>
+          <text x="48" y="69" text-anchor="end">100</text>
+          <text x="55" y="185">mi 0</text>
+          <text x="240" y="185">mi 100</text>
+          <text x="430" y="185">mi 200</text>
+          <text x="620" y="185">mi 300+</text>
+        </g>
+        <line x1="55" y1="69" x2="665" y2="69" stroke="#E2E8F0" stroke-dasharray="4 4"/>
+        <line x1="55" y1="119" x2="665" y2="119" stroke="#E2E8F0" stroke-dasharray="4 4"/>
+        <!-- route A profile -->
+        <path d="M55 158 L120 150 L185 144 L250 132 L315 118 L380 96 L445 84 L510 102 L575 126 L640 140" fill="none" stroke="#38BDF8" stroke-width="3"/>
+        <!-- route B profile with storm spike -->
+        <path d="M55 156 L120 146 L185 138 L250 118 L315 74 L380 46 L445 66 L510 96 L575 120 L640 136" fill="none" stroke="#F59E0B" stroke-width="3"/>
+        <circle cx="380" cy="46" r="5" fill="#EF4444"/>
+        <text x="380" y="34" text-anchor="middle" font-size="9" fill="#B91C1C" font-weight="bold">storm cell flagged (mi ~180)</text>
+        <g font-size="9" fill="#475569">
+          <text x="600" y="152">checkpoint spacing ≈ 9 mi</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Donut: factor split -->
+    <div class="card">
+      <h3 style="margin-bottom:2mm;">C · What moves the score — weighted risk factors</h3>
+      <svg width="690" height="180" viewBox="0 0 690 180">
+        <!-- donut segments: r=60, cx=140, cy=90; circumference 2*pi*60=376.99 -->
+        <g transform="rotate(-90 140 90)">
+          <circle cx="140" cy="90" r="60" fill="none" stroke="#E2E8F0" stroke-width="30"/>
+          <circle cx="140" cy="90" r="60" fill="none" stroke="#0EA5E9" stroke-width="30" stroke-dasharray="128.2 248.8" stroke-dashoffset="0"/>
+          <circle cx="140" cy="90" r="60" fill="none" stroke="#F59E0B" stroke-width="30" stroke-dasharray="98.0 279.0" stroke-dashoffset="-128.2"/>
+          <circle cx="140" cy="90" r="60" fill="none" stroke="#8B5CF6" stroke-width="30" stroke-dasharray="67.9 309.1" stroke-dashoffset="-226.2"/>
+          <circle cx="140" cy="90" r="60" fill="none" stroke="#EF4444" stroke-width="30" stroke-dasharray="52.8 324.2" stroke-dashoffset="-294.1"/>
+          <circle cx="140" cy="90" r="60" fill="none" stroke="#22C55E" stroke-width="30" stroke-dasharray="30.1 346.9" stroke-dashoffset="-346.9"/>
+        </g>
+        <text x="140" y="86" text-anchor="middle" font-size="13" font-weight="bold" fill="#0B1F3A">100%</text>
+        <text x="140" y="102" text-anchor="middle" font-size="8.5" fill="#64748B">risk weight</text>
+        <g font-size="10.5" fill="#334155">
+          <rect x="300" y="34" width="12" height="12" fill="#0EA5E9"/><text x="322" y="45">Precipitation (rain / snow intensity) — 34%</text>
+          <rect x="300" y="60" width="12" height="12" fill="#F59E0B"/><text x="322" y="71">Wind gusts (crosswind on high-profile rigs) — 26%</text>
+          <rect x="300" y="86" width="12" height="12" fill="#8B5CF6"/><text x="322" y="97">Visibility (fog / heavy precipitation) — 18%</text>
+          <rect x="300" y="112" width="12" height="12" fill="#EF4444"/><text x="322" y="123">Storm cells flagged on segment — 14%</text>
+          <rect x="300" y="138" width="12" height="12" fill="#22C55E"/><text x="322" y="149">Temperature / road-glaze risk — 8%</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="note" style="margin-top:5mm;">
+      <b>Note:</b> figures above are an illustrative example of the engine's output format (deterministic
+      sample), not a live forecast. The deployed app computes scores from real provider data at request time.
+    </div>
+  </div>
+  <div class="footer muted"><span>StormRoute · Case Study</span><span>Page 4 of 5</span></div>
+</div>
+
+<!-- ============ PAGE 5 — STACK, QUALITY, DEPLOYMENT ============ -->
+<div class="page">
+  <div class="headerband">
+    <h2>4 · Stack, Quality &amp; Deployment</h2>
+    <div class="sub">What it is built with, how it is tested, where it runs</div>
+  </div>
+  <div class="pad">
+    <h3 style="margin-bottom:2mm;">Technology stack</h3>
+    <table style="margin-bottom:6mm;">
+      <tr><th style="width:26%;">Layer</th><th>Technology</th><th style="width:38%;">Role</th></tr>
+      <tr><td>Frontend</td><td>React 18, TypeScript, Vite, Tailwind CSS</td><td>Trip form, route comparison, risk breakdowns</td></tr>
+      <tr><td>Map</td><td>Mapbox GL JS</td><td>Interactive corridor map with flagged checkpoints</td></tr>
+      <tr><td>Backend</td><td>Python, Django, Django REST Framework</td><td>JSON route API + risk engine core</td></tr>
+      <tr><td>Data providers</td><td>Geocoding · Routing · Weather APIs</td><td>Place resolution, route geometry, forecasts</td></tr>
+      <tr><td>Hosting</td><td>Vercel</td><td>Edge frontend + serverless API, CI on push</td></tr>
+    </table>
+
+    <h3 style="margin-bottom:2mm;">Quality &amp; testing</h3>
+    <table style="margin-bottom:6mm;">
+      <tr><th style="width:38%;">Area</th><th>Approach</th></tr>
+      <tr><td>Risk engine</td><td>Deterministic Python tests — sampling math, scoring weights, edge cases</td></tr>
+      <tr><td>Provider integration</td><td>Contract tests against recorded fixtures (no live calls in CI)</td></tr>
+      <tr><td>Frontend</td><td>TypeScript strict mode + production build gate</td></tr>
+      <tr><td>Browser verification</td><td>Real-browser E2E passes of trip planning, comparison and map flows</td></tr>
+    </table>
+
+    <h3 style="margin-bottom:2mm;">Deployment</h3>
+    <table style="margin-bottom:6mm;">
+      <tr><th style="width:26%;">Component</th><th>Status</th></tr>
+      <tr><td>Frontend</td><td>Live — https://stormroute-two.vercel.app</td></tr>
+      <tr><td>Backend API</td><td>Live — serverless, health-checked endpoint</td></tr>
+      <tr><td>Walkthrough</td><td>4-minute video — https://www.loom.com/share/c0efe1dd8b684aa1b9fb477ed800a7b6</td></tr>
+    </table>
+
+    <div class="card" style="margin-top:8mm;">
+      <h3>Built by</h3>
+      <p style="font-size:10.5pt; margin-top:2mm; line-height:1.55;">
+        <b>Muhammad Sudais</b> — Applied AI Engineer (freelance, full-stack).
+        Designed, built, tested and deployed end-to-end as a solo project:
+        product thinking, backend risk engine, frontend dashboard, provider
+        integration, testing and public deployment.
+      </p>
+      <p class="muted small" style="margin-top:3mm;">
+        Risk scores are checkpoint-based estimates computed from third-party weather data at
+        request time; they support trip planning and do not replace driver judgment or official
+        road advisories.
+      </p>
+    </div>
+  </div>
+  <div class="footer muted"><span>StormRoute · Case Study</span><span>Page 5 of 5</span></div>
+</div>
+
+</body>
+</html>

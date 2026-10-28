@@ -455,3 +455,7 @@ re-deploys use the API path instead of the UI.
 - Tradeoff accepted: LinkedIn CDN propagates newly synced link-preview images
   with minutes-scale delay; card renders placeholder until then.
 - Evidence: docs/TEST_LOG.md (2026-10-28 section), docs/verification/linkedin/.
+
+### 2026-10-28 - LinkedIn Projects contributors left empty
+User chose to skip contributors (solo-built project; tagging real connections would send notification for unearned credit). Section intentionally blank.
+
