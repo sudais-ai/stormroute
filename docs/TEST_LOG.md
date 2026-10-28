@@ -1322,3 +1322,34 @@ video 117, PDF 119, image 130 — all under limit.
 
 No GitHub/source link anywhere in the entry (user hard rule). No project code
 changed in this section.
+
+### Update: images expanded to 5 + designed hero set as thumbnail (2026-10-28, later)
+
+User request: (1) 4-5 images total, (2) the designed hero properly set as the
+project thumbnail, (3) a caption under every block.
+
+- Images added one-by-one via "Upload images" (file input is single-file, so
+  multi-select not possible): stormroute-featured-hero.png,
+  stormroute-case-study-hero.png, product-quality-02-results.png,
+  product-quality-04-final-verdict.png. Total image blocks now 5 (4 new +
+  existing og-image hero).
+- Captions filled per image (React native-setter + input event; verified
+  lengths): existing og-image 130, featured hero 124, case-study cover 112,
+  live dashboard 107, route results 109 - all under the 140-char limit.
+- **Link blocks have NO caption field on Upwork** (checked DOM: only video,
+  PDF and image descriptions exist; no edit affordance on web-link blocks; no
+  drag/reorder handles either, so text blocks could not be repositioned
+  between blocks). Video, PDF and all 5 images have captions; the two web
+  links render their own URL/title - platform limitation, noted honestly.
+- **Thumbnail**: "Change thumbnail" opens a MOVE/Zoom crop dialog with a
+  horizontal candidate strip (3 video frames + the 4 newly uploaded images;
+  blobs matched by upload order). Designed featured hero selected from the
+  strip, saved via Save -> "Your portfolio project is published!" confirmed.
+- Post-publish verification: card thumbnail now the designed hero (dark
+  StormRoute branding, map card) at position 1; detail overlay text-verified
+  to contain every caption ("Designed hero…", "Case study cover…",
+  "Live dashboard…", "Route results…") plus earlier video/PDF/link blocks.
+- Evidence: docs/verification/upwork/portfolio-thumb-hero.png (card with hero
+  thumbnail), portfolio-card-final.png, portfolio-images-captions.png,
+  portfolio-images-captions2.png; linkedin/thumb-picker.png (candidate
+  strip), linkedin/thumb-hero-selected.png.
