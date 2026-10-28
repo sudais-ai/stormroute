@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>StormRoute — Featured Hero</title>
+<style>
+  :root {
+    --ink: #0A1128;
+    --navy1: #0B1220;
+    --navy2: #152647;
+    --accent: #F5A623;
+    --cyan: #38BDF8;
+    --paper: #EAF1FA;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 628px; overflow: hidden; }
+  body {
+    font-family: "Segoe UI", Inter, Arial, sans-serif;
+    background: radial-gradient(1200px 628px at -10% -20%, #1B3564 0%, transparent 55%),
+                radial-gradient(900px 500px at 115% 120%, #27436E 0%, transparent 50%),
+                linear-gradient(135deg, var(--navy1) 0%, var(--navy2) 100%);
+    color: var(--paper);
+    position: relative;
+  }
+  .grid-lines {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .wrap { position: absolute; inset: 0; padding: 46px 52px; display: flex; flex-direction: column; }
+  .badge {
+    align-self: flex-start; letter-spacing: 3px; font-size: 13px; font-weight: 700;
+    color: #0B1220; background: linear-gradient(90deg, var(--accent), #FFD37A);
+    padding: 7px 14px; border-radius: 999px; text-transform: uppercase;
+    box-shadow: 0 6px 18px rgba(245,166,35,0.35);
+  }
+  h1 {
+    margin-top: 16px; font-size: 74px; line-height: 1.02; font-weight: 800; letter-spacing: -1.5px;
+  }
+  h1 span { color: var(--cyan); }
+  .subtitle { margin-top: 8px; font-size: 25px; font-weight: 600; color: #C7D6EA; max-width: 660px; line-height: 1.32; }
+  .features { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; width: 640px; }
+  .chip {
+    display: flex; align-items: center; gap: 9px;
+    background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.35);
+    padding: 11px 16px; border-radius: 12px; font-size: 16.5px; font-weight: 600; color: #DCE9F7;
+  }
+  .chip b { color: var(--cyan); font-weight: 800; }
+  .cta-row { margin-top: auto; display: flex; align-items: center; gap: 16px; }
+  .cta {
+    background: linear-gradient(90deg, var(--accent), #FFD37A);
+    color: #0B1220; font-weight: 800; font-size: 19px; padding: 15px 26px; border-radius: 14px;
+    box-shadow: 0 10px 26px rgba(245,166,35,0.32);
+  }
+  .cta.ghost {
+    background: transparent; color: var(--paper);
+    border: 1.5px solid rgba(234,241,250,0.5); box-shadow: none; font-weight: 600;
+  }
+  .meta { margin-left: auto; text-align: right; font-size: 13.5px; color: #9FB4CF; line-height: 1.6; }
+  .meta b { color: #DCE9F7; }
+  /* mini map visual */
+  .map-card {
+    position: absolute; right: 44px; top: 74px; width: 470px; height: 380px;
+    background: rgba(10,17,40,0.55); border: 1px solid rgba(56,189,248,0.28);
+    border-radius: 20px; backdrop-filter: blur(4px);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    padding: 20px;
+  }
+  .map-card .hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .map-card .hd .t { font-size: 14.5px; font-weight: 700; color: #DCE9F7; letter-spacing: 0.4px; }
+  .map-card .hd .risk {
+    font-size: 12.5px; font-weight: 800; color: #0B1220; background: var(--accent);
+    padding: 5px 10px; border-radius: 999px;
+  }
+  svg.route { width: 100%; height: 276px; display: block; }
+  .cp-label { display: flex; justify-content: space-between; font-size: 12.5px; color: #9FB4CF; margin-top: 6px; }
+  .cp-label b { color: var(--cyan); }
+</style>
+</head>
+<body>
+  <div class="grid-lines"></div>
+
+  <div class="map-card">
+    <div class="hd">
+      <div class="t">MEMPHIS → DENVER</div>
+      <div class="risk">RISK SCORE 24 / 100 — LOW</div>
+    </div>
+    <svg class="route" viewBox="0 0 430 276" fill="none">
+      <rect x="6" y="14" width="418" height="238" rx="14" fill="#0E1B33" stroke="rgba(56,189,248,0.18)"/>
+      <path d="M40 210 C 110 190, 120 120, 180 128 S 300 60, 300 120 S 360 96, 392 62"
+            stroke="#20344F" stroke-width="10" stroke-linecap="round"/>
+      <path d="M40 210 C 110 190, 120 120, 180 128 S 300 60, 300 120 S 360 96, 392 62"
+            stroke="#38BDF8" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="1 9"/>
+      <path d="M40 210 C 150 236, 260 224, 392 62"
+            stroke="#F5A623" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="1 9"/>
+      <g font-size="13" font-weight="700">
+        <text x="24" y="234" fill="#9FB4CF">MEM</text>
+        <text x="352" y="52" fill="#9FB4CF">DEN</text>
+      </g>
+      <g>
+        <circle cx="148" cy="158" r="9" fill="#F5A623"/><circle cx="148" cy="158" r="3.4" fill="#0B1220"/>
+        <circle cx="255" cy="112" r="9" fill="#38BDF8"/><circle cx="255" cy="112" r="3.4" fill="#0B1220"/>
+        <circle cx="330" cy="88" r="9" fill="#F5A623"/><circle cx="330" cy="88" r="3.4" fill="#0B1220"/>
+      </g>
+      <g text-anchor="middle" font-size="15">
+        <text x="148" y="140" fill="#DCE9F7">⛈</text>
+        <text x="255" y="94" fill="#DCE9F7">🌧</text>
+        <text x="330" y="70" fill="#DCE9F7">🌦</text>
+      </g>
+      <g font-size="11.5" fill="#9FB4CF">
+        <text x="102" y="256">45+ weather checkpoints</text>
+      </g>
+    </svg>
+    <div class="cp-label">
+      <span>cp 12 — <b style="color:#F5A623">GHD</b></span>
+      <span>cp 24 — <b style="color:#38BDF8">OKL</b></span>
+      <span>cp 37 — <b style="color:#F5A623">WCH</b></span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="badge">Freelance Full-Stack Project — Live Demo</div>
+    <h1>Storm<span>Route</span></h1>
+    <div class="subtitle">Weather-Aware Truck Routing — pick the safest lane, not just the shortest one.</div>
+
+    <div class="features">
+      <div class="chip"><b>45+</b> weather checkpoints / route</div>
+      <div class="chip">Per-<b>mile</b> weather-risk scoring</div>
+      <div class="chip">Multiple routes, <b>ranked</b> instantly</div>
+      <div class="chip"><b>Live</b> route payload API</div>
+    </div>
+
+    <div class="cta-row">
+      <div class="cta">TRY LIVE → stormroute-two.vercel.app</div>
+      <div class="cta ghost">▶ 4-MIN VIDEO WALKTHROUGH</div>
+      <div class="meta">
+        <b>React · TypeScript · Vite · Tailwind</b><br>
+        Django REST · Python · Mapbox GL<br>
+        Built end-to-end as a freelance project
+      </div>
+    </div>
+  </div>
+</body>
+</html>

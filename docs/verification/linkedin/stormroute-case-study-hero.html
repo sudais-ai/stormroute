@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>StormRoute — Case Study</title>
+<style>
+  :root {
+    --ink: #0A1128;
+    --navy1: #0B1220;
+    --navy2: #16294F;
+    --accent: #F5A623;
+    --cyan: #38BDF8;
+    --paper: #EAF1FA;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 628px; overflow: hidden; }
+  body {
+    font-family: "Segoe UI", Inter, Arial, sans-serif;
+    background:
+      radial-gradient(1000px 560px at -8% -18%, #1E3D6F 0%, transparent 52%),
+      radial-gradient(860px 470px at 112% 118%, #2A4B7C 0%, transparent 48%),
+      linear-gradient(135deg, var(--navy1) 0%, var(--navy2) 100%);
+    color: var(--paper);
+    position: relative;
+  }
+  .grid-lines {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.055) 1px, transparent 1px);
+    background-size: 46px 46px;
+  }
+  .glow {
+    position: absolute; width: 420px; height: 420px; left: -140px; top: 200px;
+    background: radial-gradient(circle, rgba(56,189,248,0.14) 0%, transparent 70%);
+  }
+  .frame {
+    position: absolute; inset: 26px; border: 1.5px solid rgba(56,189,248,0.28);
+    border-radius: 24px; pointer-events: none;
+  }
+  .wrap { position: absolute; inset: 26px; padding: 38px 44px; }
+
+  .topbar { display: flex; align-items: center; gap: 14px; }
+  .badge {
+    letter-spacing: 2.6px; font-size: 12.5px; font-weight: 800;
+    color: #0B1220; background: linear-gradient(90deg, var(--accent), #FFD37A);
+    padding: 7px 16px; border-radius: 999px; text-transform: uppercase;
+    box-shadow: 0 6px 20px rgba(245,166,35,0.35);
+  }
+  .live-dot {
+    display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700;
+    color: #7CF7C4; background: rgba(124,247,196,0.09); border: 1px solid rgba(124,247,196,0.35);
+    padding: 7px 13px; border-radius: 999px; letter-spacing: 1px;
+  }
+  .live-dot i { width: 8px; height: 8px; border-radius: 50%; background: #7CF7C4; box-shadow: 0 0 10px #7CF7C4; }
+  .built { margin-left: auto; font-size: 13px; color: #9FB4CF; }
+  .built b { color: #DCE9F7; }
+
+  h1 {
+    margin-top: 18px; font-size: 78px; line-height: 1; font-weight: 800; letter-spacing: -1.5px;
+  }
+  h1 span { color: var(--cyan); text-shadow: 0 0 34px rgba(56,189,248,0.45); }
+  .subtitle { margin-top: 12px; font-size: 21.5px; font-weight: 600; color: #C7D6EA; max-width: 560px; line-height: 1.36; }
+  .subtitle em { color: var(--accent); font-style: normal; font-weight: 800; }
+
+  .kpis { display: flex; gap: 10px; margin-top: 22px; width: 600px; }
+  .kpi {
+    flex: 1; background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.32);
+    border-radius: 13px; padding: 11px 12px;
+  }
+  .kpi .n { font-size: 21px; font-weight: 800; color: var(--cyan); line-height: 1; }
+  .kpi .l { font-size: 11.3px; color: #AFC4DE; margin-top: 6px; line-height: 1.3; font-weight: 600; }
+
+  .cta-row { position: absolute; left: 70px; bottom: 44px; right: 70px; display: flex; align-items: center; gap: 13px; }
+  .cta {
+    background: linear-gradient(90deg, var(--accent), #FFD37A);
+    color: #0B1220; font-weight: 800; font-size: 16px; padding: 13px 18px; border-radius: 13px;
+    box-shadow: 0 10px 26px rgba(245,166,35,0.3); white-space: nowrap;
+  }
+  .cta.ghost {
+    background: transparent; color: var(--paper);
+    border: 1.5px solid rgba(234,241,250,0.5); box-shadow: none; font-weight: 600; font-size: 14.5px;
+  }
+  .stack { margin-left: auto; text-align: right; font-size: 12.4px; color: #9FB4CF; line-height: 1.58; }
+  .stack b { color: #DCE9F7; }
+
+  /* dashboard mock — case study vibe */
+  .shot {
+    position: absolute; right: 52px; top: 106px; width: 472px; height: 322px;
+    background: rgba(8,14,32,0.5); border: 1px solid rgba(56,189,248,0.3);
+    border-radius: 18px; box-shadow: 0 26px 60px rgba(0,0,0,0.42);
+    padding: 15px 17px; backdrop-filter: blur(5px); overflow: hidden;
+  }
+  .shot .hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
+  .shot .hd .t { font-size: 13.2px; font-weight: 800; color: #DCE9F7; letter-spacing: 0.5px; white-space: nowrap; }
+  .shot .hd .risk { font-size: 11.5px; font-weight: 800; color: #0B1220; background: var(--accent); padding: 4.5px 10px; border-radius: 999px; white-space: nowrap; }
+  .route-row { display: flex; gap: 7px; width: 100%; }
+  .rcard {
+    flex: 1 1 0; min-width: 0; background: rgba(255,255,255,0.035); border: 1px solid rgba(56,189,248,0.22);
+    border-radius: 11px; padding: 9px 8px; position: relative; overflow: hidden;
+  }
+  .rcard.sel { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(245,166,35,0.4); }
+  .rcard .rn { font-size: 9.9px; font-weight: 800; color: var(--accent); letter-spacing: 0.2px; white-space: nowrap; }
+  .rcard.sel .rn { color: #FFD37A; }
+  .rcard svg { width: 100%; height: 74px; display: block; margin: 4px 0 3px; }
+  .rcard .km { font-size: 10.2px; color: #C7D6EA; font-weight: 700; white-space: nowrap; }
+  .rcard .rr { margin-top: 3px; font-size: 9.9px; font-weight: 700; white-space: nowrap; }
+  .rcard .rr.g { color: #7CF7C4; } .rcard .rr.a { color: var(--accent); } .rcard .rr.o { color: #FF9D66; }
+  .foot-note { display: flex; gap: 16px; margin-top: 9px; font-size: 11.2px; color: #9FB4CF; }
+  .foot-note b { color: #DCE9F7; }
+</style>
+</head>
+<body>
+  <div class="grid-lines"></div>
+  <div class="glow"></div>
+  <div class="frame"></div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="badge">Freelance Case Study — Full Stack</div>
+      <div class="live-dot"><i></i> LIVE DEMO</div>
+    </div>
+
+    <h1>Storm<span>Route</span></h1>
+    <div class="subtitle">
+      Weather-Aware Truck Routing — enter origin, destination &amp; departure time,
+      get multiple real driving routes <em>ranked by per-mile weather risk</em> —
+      not just the shortest one.
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="n">45+</div><div class="l">weather checkpoints sampled per route</div></div>
+      <div class="kpi"><div class="n">3</div><div class="l">routes compared side-by-side instantly</div></div>
+      <div class="kpi"><div class="n">0–100</div><div class="l">transparent per-mile risk score</div></div>
+      <div class="kpi"><div class="n">100%</div><div class="l">deployed &amp; publicly accessible demo</div></div>
+    </div>
+
+    <div class="cta-row">
+      <div class="cta">TRY LIVE → stormroute-two.vercel.app</div>
+      <div class="cta ghost">▶ 4-min walkthrough</div>
+      <div class="stack"><b>Built end-to-end by Muhammad Sudais</b><br><b>React · TypeScript · Vite · Tailwind</b><br>Django REST · Python · Mapbox GL · Vercel</div>
+    </div>
+  </div>
+
+  <div class="shot">
+    <div class="hd">
+      <div class="t">ROUTE OPTIONS — MEMPHIS → DENVER</div>
+      <div class="risk">BEST · RISK 24/100</div>
+    </div>
+    <div class="route-row">
+      <div class="rcard sel">
+        <div class="rn">ROUTE A — BEST</div>
+        <svg viewBox="0 0 140 74">
+          <path d="M10 62 C 40 58, 46 26, 78 30 S 116 16, 130 12" stroke="#20344F" stroke-width="7" stroke-linecap="round"/>
+          <path d="M10 62 C 40 58, 46 26, 78 30 S 116 16, 130 12" stroke="#38BDF8" stroke-width="2.6" stroke-dasharray="1 7" stroke-linecap="round"/>
+          <circle cx="52" cy="40" r="5" fill="#F5A623"/><circle cx="52" cy="40" r="1.8" fill="#0B1220"/>
+          <circle cx="98" cy="21" r="5" fill="#38BDF8"/><circle cx="98" cy="21" r="1.8" fill="#0B1220"/>
+          <circle cx="130" cy="12" r="4.4" fill="#7CF7C4"/>
+          <circle cx="10" cy="62" r="4.4" fill="#EAF1FA"/>
+        </svg>
+        <div class="km">1,095 mi · 45 checkpoints</div>
+        <div class="rr g">● LOW RISK — 24/100</div>
+      </div>
+      <div class="rcard">
+        <div class="rn">ROUTE B</div>
+        <svg viewBox="0 0 140 74">
+          <path d="M10 56 C 46 40, 60 52, 88 40 S 118 22, 130 14" stroke="#20344F" stroke-width="7" stroke-linecap="round"/>
+          <path d="M10 56 C 46 40, 60 52, 88 40 S 118 22, 130 14" stroke="#F5A623" stroke-width="2.6" stroke-dasharray="1 7" stroke-linecap="round"/>
+          <circle cx="64" cy="48" r="5" fill="#F5A623"/><circle cx="64" cy="48" r="1.8" fill="#0B1220"/>
+          <circle cx="108" cy="22" r="5" fill="#38BDF8"/><circle cx="108" cy="22" r="1.8" fill="#0B1220"/>
+          <circle cx="130" cy="14" r="4.4" fill="#7CF7C4"/>
+          <circle cx="10" cy="56" r="4.4" fill="#EAF1FA"/>
+        </svg>
+        <div class="km">1,048 mi · 45 checkpoints</div>
+        <div class="rr a">● MODERATE — 41/100</div>
+      </div>
+      <div class="rcard">
+        <div class="rn">ROUTE C</div>
+        <svg viewBox="0 0 140 74">
+          <path d="M10 60 C 52 66, 84 58, 100 44 S 122 26, 130 16" stroke="#20344F" stroke-width="7" stroke-linecap="round"/>
+          <path d="M10 60 C 52 66, 84 58, 100 44 S 122 26, 130 16" stroke="#FF9D66" stroke-width="2.6" stroke-dasharray="1 7" stroke-linecap="round"/>
+          <circle cx="84" cy="50" r="5" fill="#FF9D66"/><circle cx="84" cy="50" r="1.8" fill="#0B1220"/>
+          <circle cx="115" cy="25" r="5" fill="#38BDF8"/><circle cx="115" cy="25" r="1.8" fill="#0B1220"/>
+          <circle cx="130" cy="16" r="4.4" fill="#7CF7C4"/>
+          <circle cx="10" cy="60" r="4.4" fill="#EAF1FA"/>
+        </svg>
+        <div class="km">1,120 mi · 45 checkpoints</div>
+        <div class="rr o">● ELEVATED — 57/100</div>
+      </div>
+    </div>
+    <div class="foot-note">
+      <span><b>⛈</b>&nbsp;Storm cells flagged per checkpoint</span>
+      <span><b>🌐</b>&nbsp;Live + forecast weather</span>
+      <span><b>📬</b>&nbsp;Route payload JSON API</span>
+    </div>
+  </div>
+</body>
+</html>
