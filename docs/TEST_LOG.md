@@ -1259,3 +1259,66 @@ profile via Playwright MCP. No project code touched except the OG fix below.
   1. Designed hero image (Dashboard) 2. Live App link 3. Loom walkthrough link
   (auto-fetched title "Truck Weather Alerts with Trip Routing") 4. PDF case
   study. Evidence: media-pdf-item.png, overlay-media.png, contrib-typed.png.
+
+---
+
+## 2026-10-28 — Upwork Portfolio: StormRoute project entry (published)
+
+Scope: external-site work (Upwork profile) done in real browser via Playwright
+MCP; no project code touched. User-directed sequence: skills one-by-one, then
+content blocks video → web links → PDF → image.
+
+### Add-project form (modal: "Add a new portfolio project")
+
+| Field | Value / result |
+|---|---|
+| Project title | "StormRoute — Weather-Aware Truck Routing" (40/70) |
+| Role | "Full-Stack Developer (Python, Django, React)" (44/100) |
+| Description | 461/600, ends "…full video walkthrough." No links, no GitHub. |
+| Skills | 5/5 added one-by-one via typeahead exact pick: Python, Django, React, TypeScript, Mapbox ("0 skills left" verified after each) |
+
+### Content blocks (added in requested sequence)
+
+1. **Video**: direct upload of 78.7 MB demo mp4 (`.playwright-mcp/StormRoute-Demo-linkedin.mp4`)
+   via "Upload video" (100 MB limit). Loom is YouTube/Vimeo-only in the link
+   field, so the mp4 upload was used for the video block.
+2. **Web link #1**: https://stormroute-two.vercel.app (live app).
+3. **Web link #2**: https://www.loom.com/share/c0efe1dd8b684aa1b9fb477ed800a7b6
+   (second attempt: dialog stayed open until its own "Add" clicked — then confirmed).
+4. **PDF**: stormroute-case-study.pdf (5-page case study, 127 KB).
+5. **Image**: stormroute-thumb.png (designed og-image hero).
+
+Per-block captions (verified lengths after fixing the 140-char validation):
+video 117, PDF 119, image 130 — all under limit.
+
+### Validation incident (real debugging, real fix)
+
+- "Next: Preview" blocked with toast "Enter the required fields to continue."
+- `div.nested-modal-body` innerText dump located "Must be less than 140
+  characters." between the skills section and the link blocks → video
+  description (214 chars) was the offender (initially misread as image-only).
+- Shortened video + PDF captions; error cleared (`err140: false`).
+
+### Publish flow (verified step by step)
+
+- Step: content form → "Next: Preview" → preview rendered (skills chips,
+  video caption, live-app link card, PDF card all visible).
+- Preview → "Next: Thumbnail" → auto-generated thumbnail from the demo video
+  (MOVE/Zoom crop preview; default crop accepted).
+- "Publish" clicked → modal closed.
+- Portfolio list (Published tab): **StormRoute — Weather-Aware Truck Routing
+  at position 1**, above AI Portfolio Website and TradeReady AI.
+- Detail overlay verified end-to-end: title, role, description, 5 skill chips,
+  "Published on Oct 28, 2026", video caption, live-app link card, PDF card +
+  caption, image caption, loom.com block — all present. "Copy link" available.
+
+### Evidence (all under docs/verification/)
+
+- `upwork/portfolio-live.png` — public profile Portfolio section, StormRoute first card.
+- `upwork/portfolio-detail-1.png`, `upwork/portfolio-detail-2.png` — published detail overlay (top + scrolled).
+- `linkedin/upwork-step4.png` (validation toast), `linkedin/upwork-step5.png`
+  (preview step), `linkedin/upwork-thumb-step.png` (thumbnail crop step),
+  `linkedin/blocks-all.png`, `linkedin/video-block-cap.png` (form states).
+
+No GitHub/source link anywhere in the entry (user hard rule). No project code
+changed in this section.
