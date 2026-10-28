@@ -438,3 +438,20 @@ to ON for every new project; the settings UI could not persist the OFF state
 (no network request on save). Disabled via REST PATCH /v9/projects/{id}
 {"ssoProtection":null} for both projects — documented in TEST_LOG so future
 re-deploys use the API path instead of the UI.
+
+---
+
+## 2026-10-28 - Featured section rebuilt as Link cards + OG image
+
+- Decision (user-directed): featured section must show exactly ONE StormRoute
+  item, built with LinkedIn's "Add a link" flow (Link card), mirroring the
+  TradeReady AI / Nexus Data AI card pattern. Media/image cards rejected by
+  user; Loom walkthrough referenced inside the description text, not as a
+  separate card. GitHub/source links never shown publicly.
+- Decision: to give the Link card a real thumbnail, Open Graph + Twitter
+  meta tags and a dedicated 1200x628 social image (frontend/public/og-image.png,
+  designed via docs/verification/linkedin/stormroute-case-study-hero.html)
+  were added to the frontend and deployed via master push (Vercel auto-deploy).
+- Tradeoff accepted: LinkedIn CDN propagates newly synced link-preview images
+  with minutes-scale delay; card renders placeholder until then.
+- Evidence: docs/TEST_LOG.md (2026-10-28 section), docs/verification/linkedin/.

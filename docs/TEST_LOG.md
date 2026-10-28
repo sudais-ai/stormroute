@@ -1153,3 +1153,28 @@ ilkhan687-4652's projects, Hobby, 	eam_zPJ7iEzrn8l8zUyPCLneIIZA).
   generated long-lived deploy token is revodable at
   ercel.com/account/settings/tokens (24h expiry set during creation).
 - All project secrets set via encrypted env vars; nothing echoed to docs.
+
+---
+
+## 2026-10-28 - LinkedIn Featured section setup (profile publishing, not app code)
+
+Scope note: user-directed manual UI automation of the user's own LinkedIn
+profile via Playwright MCP. No project code touched except the OG fix below.
+
+| Step | Result |
+|---|---|
+| Case-study hero thumbnail regenerated (stormroute-case-study-hero.html, 1200x628) | OK - zero text clipping (scrollWidth checks), saved in docs/verification/linkedin/ |
+| Featured: previous MEDIA (image) card "StormRoute - Full Case Study" deleted | OK - delete flow had no confirm dialog; verified via remaining delete-buttons list |
+| Featured: link-flow card re-added via "Add a link" -> https://stormroute-two.vercel.app | Card created as Link type; first attempt saved with NO thumbnail (LinkedIn "couldn't load a preview" then Try-again) |
+| Custom title + description set | OK - title "StormRoute - Live App (Weather-Aware Truck Routing)"; description lists capability bullets + live app URL + Loom walkthrough URL (no GitHub link, by user rule) |
+| Root cause of missing thumbnail | stormroute-two.vercel.app HTML had NO Open Graph/Twitter meta tags -> LinkedIn crawler got no image |
+| Fix: OG tags + designed image added to frontend | frontend/index.html (+13 meta tags), frontend/public/og-image.png (1200x628 PNG); npm run build passed |
+| Git: commits 08d8105 (OG fix) + c28e6a8 (docs evidence); push 0444e7d..c28e6a8 master | OK - Vercel auto-deploy |
+| Live OG check after deploy | / returns all og:* tags (HTTP 200); /og-image.png -> 200 |
+| LinkedIn: old placeholder card deleted + link card re-added (fresh crawl) | Modal preview showed LinkedIn CDN copy of designed hero (media.licdn.com ... articleshare-shrink_800, natural 800x420) BEFORE save |
+| Post-save card state (details/featured edit page) | Title/description correct, Link type; card <img> present (complete, not broken) but rendered as placeholder pending LinkedIn CDN sync propagation (minutes-scale, platform-side) |
+| Featured final inventory verified | Exactly 4 cards: StormRoute Link + 3 pre-existing reference Link cards (Applied AI Engineer, TradeReady AI, Nexus Data AI) - untouched, per user rule |
+| Evidence | docs/verification/linkedin/featured-final-link-card.png, featured-final-og-thumb.png, hero design files |
+
+- Status: card content LIVE and correct; hero thumbnail becomes visible once
+  LinkedIn finishes CDN image sync (LinkedIn-side, no further action possible).
