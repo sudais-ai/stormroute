@@ -1211,3 +1211,30 @@ profile via Playwright MCP. No project code touched except the OG fix below.
 - Visual proof: docs/verification/linkedin/video-post-final.png,
   video-post-with-thumb.png, thumb-visual.png, poster-real.png (Cloudflare
   direct nav blocked - poster verified in-page instead).
+
+### LinkedIn Projects section: StormRoute entry LIVE (2026-10-28)
+
+- URL: linkedin.com/in/muhammad-sudais-/details/projects/ - entry added via
+  "Add a new project" (+) button -> /edit/forms/project/new/ modal.
+- Fields filled:
+  - Name: "StormRoute — Weather-Aware Truck Routing" (40/255)
+  - Description (1,049/2,000): professional English, bullets (45+ checkpoints,
+    0-100 per-mile risk, Django REST engine, React/TS/Vite/Tailwind + Mapbox GL,
+    solo freelance build). NO links in description per user rule.
+  - Skills (7): Python (Programming Language), Django, React.js, TypeScript,
+    Mapbox, Django REST Framework, Tailwind CSS.
+  - Media (3): designed og-image hero upload (Title "StormRoute — Weather-Aware
+    Truck Routing Dashboard", 50/200 + cover description), link #1 live app
+    stormroute-two.vercel.app ("StormRoute — Live App (Weather-Aware Truck
+    Routing)" + description), link #2 Loom walkthrough (LinkedIn auto-fetched
+    Loom page title "Truck Weather Alerts with Trip Routing", branded
+    description kept). NO GitHub link anywhere.
+  - Dates: Oct 2026 - Oct 2026. Associated with: AI Engineer position.
+  - Contributors: intentionally empty (solo project).
+- Saved; verified on /details/projects/: entry FIRST in list with designed
+  thumbnail card, "Python (Programming Language), Django and +5 skills",
+  "Associated with Freelance (Upwork & Fivver)".
+- Evidence: docs/verification/linkedin/project-entry-top.png (final),
+  project-entry-final.png, form-full.png (form state).
+- Note: Playwright MCP server restarted mid-verification; re-navigated and
+  re-verified - entry intact.
