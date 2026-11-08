@@ -4,6 +4,28 @@ Compares real route options for a trucking trip by sampling wind, rain, and snow
 
 **Status: Phases 1–10 implemented and verified (2026-10-25). Backend tests: 224 (incl. dedicated scoring suite — see Tests), Frontend 80/80, TypeScript clean, production build PASS (2026-10-25). Deliverables remaining: GitHub remote/push, hosted URL, Loom walkthrough.** See `docs/ASSESSMENT_SPEC.md`, `docs/PHASE_PLAN.md`, and `docs/TEST_LOG.md`.
 
+## 📦 Project Assets
+
+| Asset | Description |
+|---|---|
+| [`Demo/stormroute-walkthrough-detail-13min.mp4`](Demo/stormroute-walkthrough-detail-13min.mp4) | Full 13-minute product walkthrough video |
+| [`stormroute-case-study.pdf`](stormroute-case-study.pdf) | Case study write-up |
+| [`Images/`](Images/) | Root UI verification screenshots (desktop/mobile, honest error states, route options, weather stops) |
+| [`Images/phase-02/`](Images/phase-02/) | Phase 2 (Trip Input) — 6 browser checks + `results.json` |
+| [`Images/phase-03/`](Images/phase-03/) | Phase 3 (Route Generation) — 5 browser checks + `results.json` |
+| [`Images/phase-04/`](Images/phase-04/) | Phase 4 (Checkpoints) — 6 browser checks + `results.json` |
+| [`Images/phase-05/`](Images/phase-05/) | Phase 5 (Weather) — 7 browser checks + `results.json` + failure dump |
+
+Key screenshots:
+
+| Screenshot | Link |
+|---|---|
+| Desktop (1280px) | ![Desktop](Images/01-frontend-desktop-1280.png) |
+| Route options (Memphis → Denver) | ![Routes](Images/route-options-memphis-denver.png) |
+| Weather stops (open, small) | ![Weather](Images/weather-stops-open-small.png) |
+| Live route checkpoints (25 mi) | ![Checkpoints](Images/phase-04/phase4-03-live-route-checkpoints-25mi.png) |
+| Live route + weather corridor | ![Weather corridor](Images/phase-05/phase5-03-live-route-weather-25mi.png) |
+
 ## What it does (assessment scope)
 
 1. **Trip Input** — Origin, Destination, Departure (ISO-8601 with timezone), Load Weight (lb), Checkpoint Interval (10/25/50 mi)
